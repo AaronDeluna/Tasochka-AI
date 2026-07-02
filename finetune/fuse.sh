@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")/.."
 PYTHON="$HOME/.tasochka-finetune-venv/bin/python"
 MODEL="${MODEL:-mlx-community/gemma-3-4b-it-qat-4bit}"
-ADAPTERS="${ADAPTERS:-finetune/adapters_qlora}"
+ADAPTERS="${ADAPTERS:-finetune/adapters_persona}"
 OUT="${OUT:-finetune/tasochka_gemma}"
 
 $PYTHON -m mlx_lm fuse --model "$MODEL" --adapter-path "$ADAPTERS" --save-path "$OUT"

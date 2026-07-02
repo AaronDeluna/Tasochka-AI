@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 
 PYTHON="$HOME/.tasochka-finetune-venv/bin/python"
 MODEL="${MODEL:-mlx-community/gemma-3-4b-it-qat-4bit}"
-ADAPTERS="${ADAPTERS:-finetune/adapters_qlora}"
+ADAPTERS="${ADAPTERS:-finetune/adapters_persona}"
 
 PROMPT="${1:-Как тебя зовут?}"
 

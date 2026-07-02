@@ -14,9 +14,11 @@ finetune/base_model/
 finetune/base_model_4bit/
 finetune/adapters/
 finetune/adapters_qlora/
+finetune/adapters_persona/
 finetune/tasochka_gemma/
 finetune/eval_runs/
 finetune/data_chat/
+finetune/data_persona/
 *.safetensors
 corpus_ids.bin
 corpus_ids.meta

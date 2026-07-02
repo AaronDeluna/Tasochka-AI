@@ -164,18 +164,41 @@ def load_persona(rng: random.Random) -> tuple[list, list]:
     return read(train_path), read(valid_path)
 
 
+# Пресеты: доля балласта (реальные диалоги) и повторов персоны.
+#   full    — большой смешанный датасет (учит и стиль, и персону)
+#   persona — фокус на личности: мало балласта (чтобы не забыть речь) + больше
+#             повторов персоны. Балласт тут НЕ учит QA (модель и так умеет),
+#             он только не даёт переобучиться на persona-фразах.
+PRESETS = {
+    "full":    {"ballast_scale": 1.0, "persona_mult": 2, "out": "data_chat"},
+    "persona": {"ballast_scale": 0.28, "persona_mult": 3, "out": "data_persona"},
+}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--persona-mult", type=int, default=2,
-                       help="Сколько раз повторить persona-примеры в train (доля персоны в миксе).")
+    parser.add_argument("--preset", choices=list(PRESETS), default="full",
+                       help="full — большой смешанный; persona — фокус на личности (рекомендуется).")
+    parser.add_argument("--persona-mult", type=int, default=None,
+                       help="Сколько раз повторить persona-примеры (по умолчанию из пресета).")
+    parser.add_argument("--ballast-scale", type=float, default=None,
+                       help="Множитель числа реальных диалогов (по умолчанию из пресета).")
+    parser.add_argument("--out", type=str, default=None,
+                       help="Папка вывода (по умолчанию из пресета).")
     parser.add_argument("--n-valid", type=int, default=250,
                        help="Сколько реальных диалогов отложить в valid.")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
+    preset = PRESETS[args.preset]
+    persona_mult = args.persona_mult if args.persona_mult is not None else preset["persona_mult"]
+    ballast_scale = args.ballast_scale if args.ballast_scale is not None else preset["ballast_scale"]
+    out_dir = Path(__file__).resolve().parent / (args.out or preset["out"])
+
     rng = random.Random(args.seed)
     seen: set = set()
 
+    print(f"Пресет: {args.preset} (балласт x{ballast_scale}, persona x{persona_mult})")
     print("Собираю диалоги из источников:")
     dialogs: list[list[dict]] = []
     for name, cap in SOURCES.items():
@@ -183,7 +206,7 @@ def main() -> None:
         if not path.exists():
             print(f"  [пропуск] {name} не найден в {DATASET_DIR}")
             continue
-        dialogs.extend(sample_source(path, cap, rng, seen))
+        dialogs.extend(sample_source(path, max(1, int(cap * ballast_scale)), rng, seen))
 
     if not dialogs:
         raise SystemExit(f"Не найдено ни одного источника в {DATASET_DIR} — "
@@ -195,27 +218,27 @@ def main() -> None:
     train_real = dialogs[n_valid:]
 
     persona_train, persona_valid = load_persona(rng)
-    train = train_real + persona_train * args.persona_mult
+    train = train_real + persona_train * persona_mult
     valid = valid_real + persona_valid
     rng.shuffle(train)
     rng.shuffle(valid)
 
-    OUT_DIR.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True)
 
     def dump(path: Path, items: list) -> None:
         with path.open("w", encoding="utf-8") as f:
             for messages in items:
                 f.write(json.dumps({"messages": messages}, ensure_ascii=False) + "\n")
 
-    dump(OUT_DIR / "train.jsonl", train)
-    dump(OUT_DIR / "valid.jsonl", valid)
+    dump(out_dir / "train.jsonl", train)
+    dump(out_dir / "valid.jsonl", valid)
 
-    persona_share = 100.0 * len(persona_train) * args.persona_mult / max(1, len(train))
-    print(f"\nTrain: {len(train)} диалогов ({len(train_real)} реальных + "
-          f"{len(persona_train)}x{args.persona_mult} persona, {persona_share:.0f}% persona)")
+    persona_share = 100.0 * len(persona_train) * persona_mult / max(1, len(train))
+    print(f"\nTrain: {len(train)} диалогов ({len(train_real)} реальных балласт + "
+          f"{len(persona_train)}x{persona_mult} persona, {persona_share:.0f}% persona)")
     print(f"Valid: {len(valid)} диалогов")
-    print(f"→ {OUT_DIR / 'train.jsonl'}")
-    print(f"→ {OUT_DIR / 'valid.jsonl'}")
+    print(f"→ {out_dir / 'train.jsonl'}")
+    print(f"→ {out_dir / 'valid.jsonl'}")
 
 
 if __name__ == "__main__":
