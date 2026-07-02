@@ -1,135 +1,62 @@
 # Tasochka AI
 
-Маленький GPT в стиле LLaMA, обученный с нуля на Apple GPU через MLX.
+Русскоязычный ассистент «Тасочка». Два независимых проекта в одном репозитории:
 
-> **Актуальные команды обучения для Mac mini M4 16GB — в [TRAINING_GUIDE.md](TRAINING_GUIDE.md)**:
-> QLoRA-дообучение Gemma 3 4B на русском чат-датасете (рекомендуемый путь) и
-> улучшенное обучение с нуля (bf16, GQA, tied embeddings, mx.compile, точный resume).
+```
+Tasochka AI/
+├── finetune/                ← ПУТЬ 1 (рекомендуемый): QLoRA-дообучение Gemma 3 4B.
+│                              Модель после этого нормально общается по-русски.
+├── from-scratch/            ← ПУТЬ 2 (учебный): свой мини-GPT с нуля на MLX/PyTorch.
+│   ├── tasochka/              Код модели и тренера.
+│   └── checkpoints/           Чекпойнты (не в git).
+├── russian-train-dataset/   ← Общие данные для обоих путей (не в git, ~8.5 GB).
+├── download_datasets.py     ← Скачивает датасеты с HuggingFace в russian-train-dataset/.
+├── TRAINING_GUIDE.md        ← ГЛАВНЫЙ ДОК: готовые команды для Mac mini M4 16GB.
+└── .venv/                   ← Общее окружение (./setup.sh).
+```
 
-**Архитектура:** BPE токенизация · RMSNorm · RoPE · SwiGLU · 6 transformer-блоков · ~25M параметров.
+**Все команды запуска — в [TRAINING_GUIDE.md](TRAINING_GUIDE.md).** Коротко:
 
-## Быстрый старт
+## Путь 1: QLoRA — ассистент, который умеет разговаривать (~2-4 часа)
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
-./setup.sh                # один раз
-source .venv/bin/activate
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python finetune/build_chat_dataset.py
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && bash finetune/train_qlora.sh
+bash finetune/chat.sh "Привет! Как тебя зовут?"
 ```
 
-### Тренировка
+Детали: [finetune/README.md](finetune/README.md).
+
+## Путь 2: свой GPT с нуля (учебный)
+
+BPE токенизация · RMSNorm · RoPE · SwiGLU · GQA · tied embeddings · bf16 · mx.compile.
 
 ```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 768 --num-layers 12 --num-heads 12 --num-kv-heads 4 --feed-forward-dim 2048 --context-length 512 --batch-size 8 --grad-accum 2 --max-steps 30000 --lr 3e-4 --warmup-steps 1000 --max-dataset-chars 2000000000
 ```
 
-Первый запуск делает три вещи последовательно:
-1. Читает и чистит `.txt` файлы из `russian-train-dataset/`
-2. Тренирует BPE токенизатор (vocab=8000)
-3. Кодирует корпус в токены (кэширует на диск)
-4. Тренирует трансформер
-
-При повторном запуске токенизатор и кэш токенов подтянутся, продолжится только train.
-
-Дефолты:
-```
---max-steps 10000          # шагов
---batch-size 16            # на M4 16GB
---lr 3e-4                  # с warmup на 100 шагов
---max-dataset-chars 30M
---vocab-size 8000          # BPE
---context-length 256       # тут BPE токенов = ~600-1000 слов
---embedding-dim 512
---num-layers 6
---num-heads 8
---feed-forward-dim 1536    # SwiGLU
---val-every 200
---checkpoint-every 500
---grad-clip 1.0
---weight-decay 0.01
---warmup-steps 100
-```
-
-По умолчанию обучение берет датасеты из:
-```bash
-russian-train-dataset/*.txt
-```
-
-Можно явно указать другой файл или папку:
-```bash
-python -m tasochka.train --data russian-train-dataset --max-steps 30000 --batch-size 16
-```
-
-Полный train (что я рекомендую):
-```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
-```
-Ожидаемое время на M4: 15–30 минут.
-
-### Общение
+Общение и веб-интерфейс:
 
 ```bash
-python -m tasochka.generate --chat
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.generate --chat
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.server
 ```
 
-Одиночный запрос:
-```bash
-python -m tasochka.generate "- Привет"
-```
+(веб-чат: открой `from-scratch/index.html`, сервер говорит по Ollama-протоколу на 127.0.0.1:11434)
 
-Параметры:
-```bash
-python -m tasochka.generate --chat --temperature 0.7 --top-k 40 --max-new 200
-```
-
-## Веб-интерфейс (опционально)
+## Первичная настройка (один раз)
 
 ```bash
-pip install -r requirements-server.txt
-python -m tasochka.server
-open index.html
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./setup.sh
 ```
 
-Сервер слушает `127.0.0.1:11434`, говорит по Ollama-протоколу (NDJSON стрим). Игнорируется при консольной работе.
+Датасеты (если ещё не скачаны): `./.venv/bin/python download_datasets.py`
 
-## Файлы чекпойнта
+## Ожидания по качеству
 
-`checkpoints/tasochka/`:
-- `tokenizer.json` — BPE
-- `config.json` — конфиг модели
-- `weights.safetensors` — веса
-- `corpus_ids.npy` — закэшированные токены корпуса (пересоздаётся если изменилось)
-
-Чтобы переучить с нуля — `rm -rf checkpoints/tasochka`.
-
-## Архитектура файлов
-
-```
-tasochka/
-├── tokenizer.py    # BPE на HuggingFace tokenizers
-├── data.py         # TXT/JSONL стрим + cleaning
-├── model.py        # MiniGPT: RMSNorm + RoPE + SwiGLU
-├── train.py        # AdamW + grad clip + warmup + checkpoints
-├── generate.py     # CLI + интерактивный чат
-└── server.py       # опциональный HTTP API
-```
-
-## Ожидаемые цифры на M4 16GB
-
-| Конфиг | Шаг | 10k шагов | val loss |
-|---|---|---|---|
-| default (25M, ctx=256, BPE) | 80–150 мс | ~15 мин | 2.5–3.0 |
-| big (50M, ctx=512) | 200–400 мс | ~50 мин | 2.2–2.5 |
-
-Char-level загнивал на val ~1.4 — это не сравнимо: разные единицы. Грубо: BPE val 2.7 ≈ char val 1.0 по качеству.
-
-## Что улучшилось vs char-level
-
-- **Связные слова всегда правильные** — BPE не может ошибиться в букве, выдаёт целое слово
-- **Длинный контекст в словах** — 256 BPE-токенов это ~150-250 русских слов, против 25-30 в char-128
-- **RoPE** даёт хорошее extrapolation за пределы контекста обучения
-- **SwiGLU** учится лучше GELU при том же бюджете параметров
-- **RMSNorm** стабильнее в FP16, чем LayerNorm
-
-## Стеклянный потолок
-
-25M параметров на ноуте — это уровень "пишет осмысленные предложения, держит тему 2-3 реплики". До GPT-3.5 далеко: нужно ~1B параметров и неделя H100. Что реально можно сделать сверх — увеличить до 100M, тренировать сутки. Это уже потребует терпения, но М4 потянет.
+- **QLoRA (Путь 1)**: уровень нормального ассистента — связная русская речь,
+  держит контекст, знает что она «Тасочка». Это готовая 4B-модель, дообученная
+  под персону на отфильтрованных русских диалогах.
+- **С нуля (Путь 2)**: 80-200M параметров на домашнем железе = «пишет осмысленные
+  предложения, держит тему 2-3 реплики». Это учебный проект про то, как LLM
+  устроены изнутри, а не замена ChatGPT.

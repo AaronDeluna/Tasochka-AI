@@ -2,6 +2,9 @@
 
 Все команды — одной строкой, копируй и вставляй в Warp целиком.
 
+Проект разбит на две папки: **`finetune/`** (Путь 1) и **`from-scratch/`** (Путь 2).
+Общие данные — в `russian-train-dataset/` в корне, общее окружение — `.venv/`.
+
 Есть два пути. **Если цель — «поговорить с моделью по-русски на нормальные темы», иди по Пути 1.**
 
 | | Путь 1: QLoRA (рекомендую) | Путь 2: с нуля |
@@ -95,19 +98,22 @@ bash finetune/train_qlora.sh --resume-adapter-file finetune/adapters_qlora/adapt
 
 **ВАЖНО:** флаги `--tie-embeddings` и `--num-kv-heads` меняют архитектуру,
 поэтому действуют только на НОВУЮ модель. Для нового прогона удали старый
-чекпоинт: `rm -rf checkpoints/tasochka` (токенизатор и кэш токенов можно
-оставить, они пересоздадутся только при смене датасета).
+чекпоинт: `rm -rf from-scratch/checkpoints/tasochka` (токенизатор и кэш токенов
+можно оставить, они пересоздадутся только при смене датасета).
+
+Весь код этого пути живёт в `from-scratch/`, запускать из неё
+(`../.venv/bin/python` — потому что окружение общее, в корне проекта).
 
 ### Рекомендуемый конфиг: ~80M, вечер обучения
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 768 --num-layers 12 --num-heads 12 --num-kv-heads 4 --feed-forward-dim 2048 --context-length 512 --batch-size 8 --grad-accum 2 --max-steps 30000 --lr 3e-4 --warmup-steps 1000 --min-lr-ratio 0.1 --max-dataset-chars 2000000000 --val-every 500 --checkpoint-every 1000
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 768 --num-layers 12 --num-heads 12 --num-kv-heads 4 --feed-forward-dim 2048 --context-length 512 --batch-size 8 --grad-accum 2 --max-steps 30000 --lr 3e-4 --warmup-steps 1000 --min-lr-ratio 0.1 --max-dataset-chars 2000000000 --val-every 500 --checkpoint-every 1000
 ```
 
 ### Конфиг побольше: ~190M, ночь-сутки
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 1024 --num-layers 16 --num-heads 16 --num-kv-heads 4 --feed-forward-dim 2816 --context-length 512 --batch-size 4 --grad-accum 4 --max-steps 60000 --lr 2.5e-4 --warmup-steps 2000 --min-lr-ratio 0.1 --max-dataset-chars 5000000000 --val-every 500 --checkpoint-every 1000
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 1024 --num-layers 16 --num-heads 16 --num-kv-heads 4 --feed-forward-dim 2816 --context-length 512 --batch-size 4 --grad-accum 4 --max-steps 60000 --lr 2.5e-4 --warmup-steps 2000 --min-lr-ratio 0.1 --max-dataset-chars 5000000000 --val-every 500 --checkpoint-every 1000
 ```
 
 Прервать можно в любой момент (Ctrl+C) — повторный запуск той же команды
@@ -116,8 +122,8 @@ cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python -m tasochka.
 ### Пообщаться / оценить
 
 ```bash
-./.venv/bin/python -m tasochka.generate --chat
-./.venv/bin/python -m tasochka.eval > eval_output.txt
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.generate --chat
+cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.eval > eval_output.txt
 ```
 
 Для чата с лучшим (а не последним) чекпоинтом: скопируй
