@@ -1,0 +1,6 @@
+# Optional: HTTP server for index.html chat UI.
+# Install only if you want the web interface:
+#   pip install -r requirements-server.txt
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6

@@ -1,0 +1,25 @@
+# PyTorch backend dependencies.
+# Install with: pip install -r requirements-torch.txt
+#
+# Use this on:
+#   * Linux/Windows servers with NVIDIA GPU (CUDA build)
+#   * Mac if you want PyTorch + MPS instead of MLX (slower but portable)
+#
+# Pick the right wheel for your hardware:
+#
+#   NVIDIA + CUDA 12.x:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu121
+#
+#   NVIDIA + CUDA 11.8:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu118
+#
+#   Mac (Apple Silicon, uses MPS):
+#     pip install torch
+#
+#   CPU only:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+torch>=2.4
+safetensors>=0.4
+numpy>=1.26
+tokenizers>=0.20

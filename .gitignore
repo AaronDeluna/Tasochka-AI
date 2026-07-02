@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Большие данные и веса — не для git
+russian-train-dataset/
+dataset-backup/
+checkpoints/
+finetune/base_model/
+finetune/base_model_4bit/
+finetune/adapters/
+finetune/adapters_qlora/
+finetune/tasochka_gemma/
+finetune/eval_runs/
+*.safetensors
+corpus_ids.bin
+corpus_ids.meta

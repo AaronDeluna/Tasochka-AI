@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tasochka AI</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --color-background-primary: #fbfbfa;
+      --color-background-secondary: #f2f3f1;
+      --color-surface: #ffffff;
+      --color-text-primary: #202522;
+      --color-text-secondary: #69716c;
+      --color-border: #d8ddd8;
+      --color-border-strong: #b7c1ba;
+      --color-accent: #1d9e75;
+      --color-accent-dark: #147a59;
+      --color-danger: #b42318;
+      --shadow: 0 18px 60px rgba(24, 32, 27, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-sans);
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .shell {
+      min-height: 100%;
+      display: flex;
+      padding: 0;
+    }
+
+    #app {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-background-primary);
+      border: 0;
+      border-radius: 0;
+      overflow: clip;
+      box-shadow: none;
+    }
+
+    #header {
+      min-height: 64px;
+      padding: 12px 22px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(251, 251, 250, 0.88);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    #dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      box-shadow: 0 0 0 5px rgba(29, 158, 117, 0.12);
+      flex: 0 0 auto;
+    }
+
+    #dot.offline {
+      background: var(--color-danger);
+      box-shadow: 0 0 0 5px rgba(180, 35, 24, 0.10);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 1px;
+    }
+
+    #model-name {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    #model-sub {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+    }
+
+    #status {
+      margin-left: auto;
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px max(18px, calc((100vw - 860px) / 2)) 150px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      scroll-behavior: smooth;
+    }
+
+    #messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #messages::-webkit-scrollbar-thumb {
+      background: var(--color-border-strong);
+      border-radius: 999px;
+    }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      max-width: min(78%, 760px);
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .msg.bot {
+      align-self: flex-start;
+      align-items: flex-start;
+      max-width: min(100%, 860px);
+    }
+
+    .msg.has-code {
+      max-width: min(100%, 860px);
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .plain-text {
+      white-space: pre-wrap;
+    }
+
+    .markdown-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .markdown-block p {
+      margin: 0;
+    }
+
+    .markdown-block h1,
+    .markdown-block h2,
+    .markdown-block h3 {
+      margin: 0;
+      line-height: 1.25;
+      font-weight: 750;
+    }
+
+    .markdown-block h1 {
+      font-size: 24px;
+    }
+
+    .markdown-block h2 {
+      font-size: 20px;
+    }
+
+    .markdown-block h3 {
+      font-size: 17px;
+    }
+
+    .markdown-block ul,
+    .markdown-block ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .markdown-block li + li {
+      margin-top: 6px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: 2px 0;
+    }
+
+    .markdown-table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.45;
+      table-layout: auto;
+    }
+
+    .markdown-table th,
+    .markdown-table td {
+      padding: 9px 10px;
+      border: 1px solid var(--color-border);
+      vertical-align: top;
+      text-align: left;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+
+    .markdown-table th {
+      background: var(--color-background-secondary);
+      font-weight: 700;
+      hyphens: auto;
+    }
+
+    .markdown-table td {
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .markdown-block strong {
+      font-weight: 700;
+    }
+
+    .inline-code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: rgba(24, 32, 27, 0.08);
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+    }
+
+    .plain-text + .code-window,
+    .code-window + .plain-text {
+      margin-top: 10px;
+    }
+
+    .markdown-block + .code-window,
+    .code-window + .markdown-block {
+      margin-top: 14px;
+    }
+
+    .code-window {
+      width: min(720px, 100%);
+      overflow: hidden;
+      border: 1px solid #26352e;
+      border-radius: 10px;
+      background: #101511;
+      color: #edf5ef;
+    }
+
+    .code-head {
+      min-height: 34px;
+      padding: 6px 8px 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #1b241f;
+      border-bottom: 1px solid #26352e;
+    }
+
+    .code-lang {
+      color: #b8c7bd;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-code {
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid #3a4a41;
+      border-radius: 7px;
+      background: #243129;
+      color: #dce8df;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .copy-code:hover {
+      background: #2e3d34;
+    }
+
+    .code-window pre {
+      margin: 0;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.55;
+      tab-size: 4;
+    }
+
+    .code-window code {
+      font: inherit;
+      color: inherit;
+    }
+
+    .msg.user .bubble {
+      background: var(--color-accent);
+      color: #fff;
+      border-bottom-right-radius: 5px;
+    }
+
+    .msg.bot .bubble {
+      background: transparent;
+      color: var(--color-text-primary);
+      border-radius: 0;
+      border: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .msg.bot .bubble.has-code {
+      width: min(860px, calc(100vw - 36px));
+    }
+
+    .msg.error .bubble {
+      color: var(--color-danger);
+      background: #fff7f6;
+      border-color: #f2b8b2;
+    }
+
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 13px 15px;
+      min-width: 58px;
+      background: var(--color-background-secondary);
+      border-radius: 18px;
+      border-bottom-left-radius: 5px;
+      border: 1px solid var(--color-border);
+    }
+
+    .typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-text-secondary);
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+      }
+
+      30% {
+        transform: translateY(-6px);
+      }
+    }
+
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--color-text-secondary);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .empty-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(29, 158, 117, 0.10);
+      color: var(--color-accent-dark);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .empty-text {
+      font-size: 15px;
+    }
+
+    #footer {
+      padding: 16px max(18px, calc((100vw - 860px) / 2)) 22px;
+      border-top: 0;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: linear-gradient(to top, var(--color-background-primary) 72%, rgba(251, 251, 250, 0));
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+    }
+
+    #input {
+      flex: 1;
+      resize: none;
+      border: 1px solid var(--color-border);
+      border-radius: 24px;
+      padding: 13px 16px;
+      font-size: 15px;
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      outline: none;
+      max-height: 160px;
+      min-height: 52px;
+      overflow-y: auto;
+      line-height: 1.5;
+      box-shadow: 0 8px 28px rgba(24, 32, 27, 0.09);
+    }
+
+    #input:focus {
+      border-color: var(--color-border-strong);
+      background: var(--color-surface);
+    }
+
+    #input::placeholder {
+      color: var(--color-text-secondary);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    #send {
+      background: var(--color-accent);
+      color: #fff;
+    }
+
+    #stop {
+      display: none;
+      background: var(--color-surface);
+      color: var(--color-danger);
+      border-color: #efc2bd;
+    }
+
+    #send:hover,
+    #stop:hover {
+      opacity: 0.86;
+    }
+
+    #send:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+
+    body.streaming #send {
+      display: none;
+    }
+
+    body.streaming #stop {
+      display: grid;
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        padding: 0;
+      }
+
+      #app {
+        width: 100%;
+        height: 100vh;
+        min-height: 100vh;
+        border-radius: 0;
+        border: 0;
+      }
+
+      #messages {
+        padding: 18px 16px 140px;
+      }
+
+      .msg {
+        max-width: 92%;
+      }
+
+      .msg.bot,
+      .msg.has-code {
+        max-width: 100%;
+      }
+
+      #status {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section id="app" aria-label="Tasochka AI chat">
+      <header id="header">
+        <div id="dot" aria-hidden="true"></div>
+        <div class="title">
+          <div id="model-name">Tasochka AI</div>
+          <div id="model-sub">Ollama model: tasochka-ai</div>
+        </div>
+        <div id="status">Готова к диалогу</div>
+      </header>
+
+      <div id="messages" aria-live="polite">
+        <div class="empty">
+          <div class="empty-icon" aria-hidden="true">T</div>
+          <div class="empty-text">Начни диалог с Tasochka AI</div>
+        </div>
+      </div>
+
+      <footer id="footer">
+        <textarea id="input" rows="1" placeholder="Напиши сообщение..."></textarea>
+        <div class="actions">
+          <button id="stop" class="icon-btn" type="button" aria-label="Остановить ответ" title="Остановить">■</button>
+          <button id="send" class="icon-btn" type="button" aria-label="Отправить" title="Отправить">↑</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const stopBtn = document.getElementById('stop');
+    const statusEl = document.getElementById('status');
+    const dotEl = document.getElementById('dot');
+    const OLLAMA_URL = 'http://localhost:11434';
+    const OLLAMA_MODEL = 'tasochka-ai';
+    const SYSTEM_PROMPT = [
+      'Ты Tasochka AI. Отвечай на русском языке чисто, аккуратно и по делу.',
+      'Форматируй ответы как ChatGPT: короткие абзацы, понятные заголовки, списки и таблицы только когда они реально помогают.',
+      'Не пиши Markdown-символы вперемешку с текстом. Если используешь список, каждый пункт начинай с новой строки.',
+      'Если используешь таблицу, отдавай только валидную Markdown-таблицу: строка заголовков, строка разделителей и строки данных. Не переноси одну строку таблицы на несколько строк.',
+      'Код всегда отдавай в fenced code block с языком, например ```java.',
+      'Не добавляй лишние дисклеймеры, если пользователь не просит юридический, медицинский или опасный совет.'
+    ].join('\n');
+
+    let history = [];
+    let busy = false;
+    let abortController = null;
+
+    function setStatus(text, offline = false) {
+      statusEl.textContent = text;
+      dotEl.classList.toggle('offline', offline);
+    }
+
+    function clearEmpty() {
+      const empty = messagesEl.querySelector('.empty');
+      if (empty) empty.remove();
+    }
+
+    function scrollToBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function appendInlineMarkdown(parent, text) {
+      const pattern = /(`[^`]+`|\*\*[\s\S]+?\*\*)/g;
+      let lastIndex = 0;
+      let match;
+
+      while ((match = pattern.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          parent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        }
+
+        const raw = match[0];
+        if (raw.startsWith('`')) {
+          const code = document.createElement('code');
+          code.className = 'inline-code';
+          code.textContent = raw.slice(1, -1);
+          parent.appendChild(code);
+        } else {
+          const strong = document.createElement('strong');
+          strong.textContent = raw.slice(2, -2);
+          parent.appendChild(strong);
+        }
+
+        lastIndex = pattern.lastIndex;
+      }
+
+      if (lastIndex < text.length) {
+        parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+    }
+
+    function isTableSeparator(line) {
+      const cells = line.trim().replace(/^\||\|$/g, '').split('|');
+      return cells.length > 1 && cells.every(cell => /^:?-{3,}:?$/.test(cell.trim()));
+    }
+
+    function isTableRow(line) {
+      return line.includes('|') && line.split('|').length > 2;
+    }
+
+    function splitTableRow(line) {
+      return line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+    }
+
+    function appendTable(parent, lines) {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+
+      const table = document.createElement('table');
+      table.className = 'markdown-table';
+
+      const headerCells = splitTableRow(lines[0]);
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+
+      for (const cell of headerCells) {
+        const th = document.createElement('th');
+        appendInlineMarkdown(th, cell);
+        headerRow.appendChild(th);
+      }
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const rows = [];
+      let lastRowCells = null;
+
+      for (const line of lines.slice(2)) {
+        if (!isTableRow(line)) {
+          if (lastRowCells && line.trim()) {
+            lastRowCells[lastRowCells.length - 1] += ' ' + line.trim();
+          }
+          continue;
+        }
+
+        const cells = splitTableRow(line);
+
+        if (lastRowCells && cells.length < headerCells.length) {
+          lastRowCells[lastRowCells.length - 1] += ' ' + cells.join(' ');
+          continue;
+        }
+
+        if (lastRowCells && cells[0] === '-' && cells.length > 1) {
+          lastRowCells[lastRowCells.length - 1] += ' ' + cells.slice(1).join(' ');
+          continue;
+        }
+
+        lastRowCells = cells;
+        rows.push(cells);
+      }
+
+      const tbody = document.createElement('tbody');
+      for (const rowCells of rows) {
+        const tr = document.createElement('tr');
+        renderTableCells(tr, headerCells, rowCells);
+        tbody.appendChild(tr);
+      }
+
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      parent.appendChild(wrap);
+    }
+
+    function renderTableCells(row, headerCells, cells) {
+      for (let index = 0; index < headerCells.length; index += 1) {
+        const td = document.createElement('td');
+        appendInlineMarkdown(td, cells[index] || '');
+        row.appendChild(td);
+      }
+    }
+
+    function appendMarkdownText(parent, text) {
+      if (!text) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'markdown-block';
+      const normalized = text
+        .trim()
+        .replace(/([.!?])\s+(?=\d+\.\s+\S)/g, '$1\n\n')
+        .replace(/([.!?])\s+(?=[-*]\s+\S)/g, '$1\n\n')
+        .replace(/\n(?=\s*\|[^\n]+\|\s*\n\s*\|?\s*:?-{3,})/g, '\n\n')
+        .replace(/(\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?)\n(?!\s*\|)/g, '$1\n\n');
+      const blocks = normalized.split(/\n{2,}/);
+
+      for (const block of blocks) {
+        const lines = block
+          .split('\n')
+          .map(line => line.trim())
+          .filter(Boolean);
+        if (!lines.length) continue;
+
+        if (lines.length === 1 && /^#{1,3}\s+/.test(lines[0])) {
+          const level = lines[0].match(/^#{1,3}/)[0].length;
+          const heading = document.createElement('h' + level);
+          appendInlineMarkdown(heading, lines[0].replace(/^#{1,3}\s+/, ''));
+          wrapper.appendChild(heading);
+          continue;
+        }
+
+        if (lines.length >= 2 && isTableRow(lines[0]) && isTableSeparator(lines[1])) {
+          appendTable(wrapper, lines);
+          continue;
+        }
+
+        if (lines.some(line => /^\d+\.\s+/.test(line))) {
+          const list = document.createElement('ol');
+          let currentItem = null;
+
+          for (const line of lines) {
+            if (/^\d+\.\s+/.test(line)) {
+              currentItem = document.createElement('li');
+              appendInlineMarkdown(currentItem, line.replace(/^\d+\.\s+/, ''));
+              list.appendChild(currentItem);
+            } else if (currentItem) {
+              currentItem.appendChild(document.createTextNode(' '));
+              appendInlineMarkdown(currentItem, line.replace(/^[-*]\s+/, ''));
+            }
+          }
+
+          if (list.childNodes.length) {
+            wrapper.appendChild(list);
+            continue;
+          }
+        }
+
+        const allBullets = lines.every(line => /^[-*]\s+/.test(line));
+        const allNumbers = lines.every(line => /^\d+\.\s+/.test(line));
+
+        if (allBullets || allNumbers) {
+          const list = document.createElement(allNumbers ? 'ol' : 'ul');
+          for (const line of lines) {
+            const item = document.createElement('li');
+            appendInlineMarkdown(item, line.replace(/^(?:[-*]|\d+\.)\s+/, ''));
+            list.appendChild(item);
+          }
+          wrapper.appendChild(list);
+        } else {
+          const paragraph = document.createElement('p');
+          appendInlineMarkdown(paragraph, lines.join('\n'));
+          wrapper.appendChild(paragraph);
+        }
+      }
+
+      if (wrapper.childNodes.length) {
+        parent.appendChild(wrapper);
+      }
+    }
+
+    function appendCodeWindow(parent, lang, code) {
+      const windowEl = document.createElement('div');
+      windowEl.className = 'code-window';
+
+      const header = document.createElement('div');
+      header.className = 'code-head';
+
+      const label = document.createElement('span');
+      label.className = 'code-lang';
+      label.textContent = lang || 'code';
+
+      const copy = document.createElement('button');
+      copy.className = 'copy-code';
+      copy.type = 'button';
+      copy.textContent = 'Copy';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          copy.textContent = 'Copied';
+          setTimeout(() => {
+            copy.textContent = 'Copy';
+          }, 1100);
+        } catch {
+          copy.textContent = 'Error';
+          setTimeout(() => {
+            copy.textContent = 'Copy';
+          }, 1100);
+        }
+      });
+
+      const pre = document.createElement('pre');
+      const codeEl = document.createElement('code');
+      codeEl.textContent = code;
+      pre.appendChild(codeEl);
+
+      header.appendChild(label);
+      header.appendChild(copy);
+      windowEl.appendChild(header);
+      windowEl.appendChild(pre);
+      parent.appendChild(windowEl);
+    }
+
+    function renderMarkdown(bubble, text) {
+      bubble.replaceChildren();
+
+      const fencePattern = /```([^\n`]*)\n?([\s\S]*?)(?:```|$)/g;
+      let lastIndex = 0;
+      let hasCode = false;
+      let match;
+
+      while ((match = fencePattern.exec(text)) !== null) {
+        hasCode = true;
+        appendMarkdownText(bubble, text.slice(lastIndex, match.index));
+        appendCodeWindow(bubble, match[1].trim(), match[2].replace(/\n$/, ''));
+        lastIndex = fencePattern.lastIndex;
+      }
+
+      appendMarkdownText(bubble, text.slice(lastIndex));
+
+      if (!bubble.childNodes.length) {
+        const node = document.createElement('div');
+        node.className = 'plain-text';
+        node.textContent = '';
+        bubble.appendChild(node);
+      }
+
+      bubble.classList.toggle('has-code', hasCode);
+      if (bubble.parentElement) {
+        bubble.parentElement.classList.toggle('has-code', hasCode);
+      }
+    }
+
+    function addMessage(role, text, error = false) {
+      clearEmpty();
+
+      const div = document.createElement('div');
+      div.className = 'msg ' + (role === 'user' ? 'user' : 'bot') + (error ? ' error' : '');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      div.appendChild(bubble);
+      renderMarkdown(bubble, text);
+      messagesEl.appendChild(div);
+      scrollToBottom();
+
+      return bubble;
+    }
+
+    function addTyping() {
+      clearEmpty();
+
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+      messagesEl.appendChild(div);
+      scrollToBottom();
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById('typing-indicator');
+      if (typing) typing.remove();
+    }
+
+    function setBusy(nextBusy) {
+      busy = nextBusy;
+      sendBtn.disabled = nextBusy;
+      document.body.classList.toggle('streaming', nextBusy);
+      inputEl.disabled = nextBusy;
+    }
+
+    function getBaseUrl() {
+      return OLLAMA_URL.replace(/\/+$/, '');
+    }
+
+    function getModel() {
+      return OLLAMA_MODEL;
+    }
+
+    function parseStreamChunk(buffer, onJson) {
+      const lines = buffer.split('\n');
+      const rest = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        onJson(JSON.parse(trimmed));
+      }
+
+      return rest;
+    }
+
+    async function send() {
+      const text = inputEl.value.trim();
+      if (!text || busy) return;
+
+      setBusy(true);
+      setStatus('Отправляю запрос...');
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+
+      addMessage('user', text);
+      const nextHistory = history.concat({ role: 'user', content: text });
+      addTyping();
+
+      abortController = new AbortController();
+      let full = '';
+
+      try {
+        const res = await fetch(getBaseUrl() + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: getModel(),
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              ...nextHistory
+            ],
+            stream: true,
+            options: {
+              temperature: 0.35,
+              top_p: 0.9
+            }
+          }),
+          signal: abortController.signal
+        });
+
+        if (!res.ok) {
+          const details = await res.text().catch(() => '');
+          throw new Error('HTTP ' + res.status + (details ? ': ' + details : ''));
+        }
+
+        if (!res.body) {
+          throw new Error('Браузер не отдал поток ответа');
+        }
+
+        removeTyping();
+        const bubble = addMessage('assistant', '');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        setStatus('Tasochka AI отвечает...');
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          buffer = parseStreamChunk(buffer, json => {
+            if (json.error) {
+              throw new Error(json.error);
+            }
+
+            const token = json.message && json.message.content ? json.message.content : '';
+            if (token) {
+              full += token;
+              renderMarkdown(bubble, full);
+              scrollToBottom();
+            }
+          });
+        }
+
+        buffer += decoder.decode();
+        const tail = buffer.trim();
+        if (tail) {
+          const json = JSON.parse(tail);
+          const token = json.message && json.message.content ? json.message.content : '';
+          if (token) {
+            full += token;
+            renderMarkdown(bubble, full);
+          }
+        }
+
+        history = nextHistory.concat({ role: 'assistant', content: full });
+        setStatus('Готова к диалогу');
+        setStatus('Готова к диалогу', false);
+      } catch (error) {
+        removeTyping();
+
+        if (error.name === 'AbortError') {
+          if (full) {
+            history = nextHistory.concat({ role: 'assistant', content: full });
+          }
+          setStatus('Ответ остановлен');
+        } else {
+          const message = [
+            'Ошибка подключения к Ollama.',
+            'Проверь, что Ollama запущена и модель доступна:',
+            'ollama run tasochka-ai',
+            '',
+            String(error.message || error)
+          ].join('\n');
+
+          addMessage('assistant', message, true);
+          setStatus('Нет подключения к Ollama', true);
+        }
+      } finally {
+        abortController = null;
+        setBusy(false);
+        inputEl.focus();
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+
+    stopBtn.addEventListener('click', () => {
+      if (abortController) abortController.abort();
+    });
+
+    inputEl.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        send();
+      }
+    });
+
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + 'px';
+    });
+
+    inputEl.focus();
+  </script>
+</body>
+</html>
