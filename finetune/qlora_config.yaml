@@ -28,16 +28,18 @@ grad_accumulation_steps: 4
 iters: 2000
 max_seq_length: 1024
 
-learning_rate: 1.0e-4
+# LR 4e-5: пик 1e-4 разгонял модель вразнос при LoRA на всех слоях + scale 20
+# (val loss рос после ~200 итераций). 4e-5 — безопасная зона для этой связки.
+learning_rate: 4.0e-5
 lr_schedule:
   name: cosine_decay
   warmup: 100
   warmup_init: 1.0e-7
-  arguments: [1.0e-4, 1900, 1.0e-5]  # [начальный LR, шагов затухания, конечный LR]
+  arguments: [4.0e-5, 1900, 4.0e-6]  # [начальный LR, шагов затухания, конечный LR]
 
 lora_parameters:
   rank: 16
-  scale: 20.0
+  scale: 16.0  # было 20; чуть мягче эффективный шаг адаптера
   dropout: 0.05
 
 mask_prompt: true
