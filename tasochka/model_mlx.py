@@ -3,10 +3,19 @@
 Architecture:
   - Token embedding (no learned positional embedding)
   - N blocks of:
-      RMSNorm -> CausalAttention with RoPE -> residual ->
+      RMSNorm -> CausalAttention with RoPE (optionally GQA) -> residual ->
       RMSNorm -> SwiGLU FF -> residual
   - Final RMSNorm
-  - LM head (no bias)
+  - LM head (no bias); optionally tied to the token embedding
+
+Efficiency features (all backwards-compatible with old checkpoints):
+  - GQA (grouped-query attention): fewer KV heads than Q heads, like
+    Qwen/DeepSeek/LLaMA-3. Cuts KV projection params and attention memory.
+    Enabled via `num_kv_heads` < `num_heads`; old configs default to MHA.
+  - Tied embeddings: LM head reuses the token embedding matrix, saving
+    vocab*dim parameters (standard in Qwen, Gemma, all small models).
+  - Scaled init: normal(0, 0.02) with residual projections scaled down by
+    1/sqrt(2*num_layers) (GPT-2/LLaMA practice) — stabler early training.
 """
 from __future__ import annotations
 
@@ -27,10 +36,18 @@ class ModelConfig:
     num_layers: int = 6
     num_heads: int = 8
     feed_forward_dim: int = 1536
+    # 0 means "same as num_heads" (classic MHA) — keeps old checkpoints valid.
+    num_kv_heads: int = 0
+    tie_embeddings: bool = False
+    rope_theta: float = 10000.0
 
     def __post_init__(self):
         if self.embedding_dim % self.num_heads != 0:
             raise ValueError("embedding_dim must be divisible by num_heads")
+        if self.num_kv_heads in (0, None):
+            self.num_kv_heads = self.num_heads
+        if self.num_heads % self.num_kv_heads != 0:
+            raise ValueError("num_heads must be divisible by num_kv_heads")
 
     @property
     def head_dim(self) -> int:
@@ -41,22 +58,28 @@ class CausalAttention(nn.Module):
     def __init__(self, cfg: ModelConfig):
         super().__init__()
         self.n_heads = cfg.num_heads
+        self.n_kv_heads = cfg.num_kv_heads
         self.head_dim = cfg.head_dim
         self.scale = self.head_dim ** -0.5
+        kv_dim = self.n_kv_heads * self.head_dim
         self.wq = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
-        self.wk = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
-        self.wv = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
+        self.wk = nn.Linear(cfg.embedding_dim, kv_dim, bias=False)
+        self.wv = nn.Linear(cfg.embedding_dim, kv_dim, bias=False)
         self.wo = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
-        self.rope = nn.RoPE(self.head_dim, traditional=False)
+        self.rope = nn.RoPE(self.head_dim, traditional=False, base=cfg.rope_theta)
 
-    def __call__(self, x: mx.array, mask: mx.array) -> mx.array:
+    def __call__(self, x: mx.array) -> mx.array:
         B, T, C = x.shape
         q = self.wq(x).reshape(B, T, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
-        k = self.wk(x).reshape(B, T, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
-        v = self.wv(x).reshape(B, T, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
+        k = self.wk(x).reshape(B, T, self.n_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
+        v = self.wv(x).reshape(B, T, self.n_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
         q = self.rope(q)
         k = self.rope(k)
-        out = mx.fast.scaled_dot_product_attention(q, k, v, scale=self.scale, mask=mask)
+        # String mask lets Metal use the fused causal kernel (no T*T mask alloc);
+        # GQA (n_kv_heads < n_heads) is handled natively by the kernel.
+        out = mx.fast.scaled_dot_product_attention(
+            q, k, v, scale=self.scale, mask="causal" if T > 1 else None
+        )
         out = out.transpose(0, 2, 1, 3).reshape(B, T, C)
         return self.wo(out)
 
@@ -80,8 +103,8 @@ class Block(nn.Module):
         self.norm2 = nn.RMSNorm(cfg.embedding_dim)
         self.ff = SwiGLU(cfg)
 
-    def __call__(self, x: mx.array, mask: mx.array) -> mx.array:
-        x = x + self.attn(self.norm1(x), mask)
+    def __call__(self, x: mx.array) -> mx.array:
+        x = x + self.attn(self.norm1(x))
         x = x + self.ff(self.norm2(x))
         return x
 
@@ -93,26 +116,46 @@ class MiniGPT(nn.Module):
         self.tok_emb = nn.Embedding(cfg.vocab_size, cfg.embedding_dim)
         self.blocks = [Block(cfg) for _ in range(cfg.num_layers)]
         self.norm_f = nn.RMSNorm(cfg.embedding_dim)
-        self.head = nn.Linear(cfg.embedding_dim, cfg.vocab_size, bias=False)
-
-    @staticmethod
-    def causal_mask(T: int) -> mx.array:
-        return mx.triu(mx.full((T, T), -1e9), k=1)
+        if not cfg.tie_embeddings:
+            self.head = nn.Linear(cfg.embedding_dim, cfg.vocab_size, bias=False)
 
     def __call__(self, idx: mx.array) -> mx.array:
         x = self.tok_emb(idx)
-        mask = self.causal_mask(idx.shape[1])
         for block in self.blocks:
-            x = block(x, mask)
+            x = block(x)
         x = self.norm_f(x)
+        if self.cfg.tie_embeddings:
+            return self.tok_emb.as_linear(x)
         return self.head(x)
 
     def loss(self, idx: mx.array, targets: mx.array) -> mx.array:
         logits = self(idx)
         B, T, V = logits.shape
+        # Cross-entropy in fp32 even when the model runs in bf16.
         return nn.losses.cross_entropy(
-            logits.reshape(B * T, V), targets.reshape(B * T), reduction="mean"
+            logits.reshape(B * T, V).astype(mx.float32),
+            targets.reshape(B * T),
+            reduction="mean",
         )
+
+
+def init_weights(model: MiniGPT, cfg: ModelConfig, seed: int = 0) -> None:
+    """GPT-2/LLaMA-style init: normal(0, 0.02); residual output projections
+    (attn.wo, ff.w2) scaled down by 1/sqrt(2*num_layers)."""
+    mx.random.seed(seed)
+    std = 0.02
+    resid_std = std / math.sqrt(2 * cfg.num_layers)
+
+    def _init(name: str, module) -> None:
+        if isinstance(module, nn.Linear):
+            s = resid_std if name.endswith((".wo", ".w2")) else std
+            module.weight = s * mx.random.normal(module.weight.shape)
+        elif isinstance(module, nn.Embedding):
+            module.weight = std * mx.random.normal(module.weight.shape)
+
+    for name, module in model.named_modules():
+        _init(name, module)
+    mx.eval(model.parameters())
 
 
 def _flatten(obj, prefix: str, out: dict) -> None:
@@ -157,12 +200,13 @@ def _unflatten(flat: dict) -> dict:
     return root
 
 
-def save_checkpoint(directory: Path, model: MiniGPT, cfg: ModelConfig) -> None:
+def save_checkpoint(directory: Path, model: MiniGPT, cfg: ModelConfig,
+                    weights_name: str = "weights.safetensors") -> None:
     directory.mkdir(parents=True, exist_ok=True)
     weights = dict(model.parameters())
     flat: dict = {}
     _flatten(weights, "", flat)
-    mx.save_safetensors(str(directory / "weights.safetensors"), flat)
+    mx.save_safetensors(str(directory / weights_name), flat)
     (directory / "config.json").write_text(
         json.dumps(asdict(cfg), ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -170,7 +214,10 @@ def save_checkpoint(directory: Path, model: MiniGPT, cfg: ModelConfig) -> None:
 
 
 def load_checkpoint(directory: Path) -> tuple[MiniGPT, ModelConfig]:
-    cfg = ModelConfig(**json.loads((directory / "config.json").read_text(encoding="utf-8")))
+    raw_cfg = json.loads((directory / "config.json").read_text(encoding="utf-8"))
+    # Ignore config keys this code version doesn't know (forward compatibility).
+    known = set(ModelConfig.__dataclass_fields__)
+    cfg = ModelConfig(**{k: v for k, v in raw_cfg.items() if k in known})
     model = MiniGPT(cfg)
     flat = mx.load(str(directory / "weights.safetensors"))
     nested = _unflatten(flat)

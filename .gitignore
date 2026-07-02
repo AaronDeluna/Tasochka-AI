@@ -16,6 +16,7 @@ finetune/adapters/
 finetune/adapters_qlora/
 finetune/tasochka_gemma/
 finetune/eval_runs/
+finetune/data_chat/
 *.safetensors
 corpus_ids.bin
 corpus_ids.meta

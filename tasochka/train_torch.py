@@ -24,6 +24,7 @@ from .data import (
 from .model_torch import (
     MiniGPT,
     ModelConfig,
+    init_weights,
     load_checkpoint,
     param_count,
     pick_device,
@@ -42,7 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-steps", type=int, default=10000)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--weight-decay", type=float, default=0.01)
+    parser.add_argument("--weight-decay", type=float, default=0.1)
     parser.add_argument("--max-dataset-chars", type=int, default=30_000_000)
     parser.add_argument("--vocab-size", type=int, default=8000)
     parser.add_argument("--val-fraction", type=float, default=0.02)
@@ -55,7 +56,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--embedding-dim", type=int, default=896)
     parser.add_argument("--num-layers", type=int, default=20)
     parser.add_argument("--num-heads", type=int, default=14)
+    parser.add_argument("--num-kv-heads", type=int, default=0,
+                       help="GQA: KV-голов меньше, чем Q-голов (0 = столько же, обычный MHA).")
     parser.add_argument("--feed-forward-dim", type=int, default=2400)
+    parser.add_argument("--tie-embeddings", action="store_true",
+                       help="LM-голова использует матрицу эмбеддингов (экономит vocab*dim параметров).")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--warmup-steps", type=int, default=100)
     parser.add_argument("--min-lr-ratio", type=float, default=0.1,
@@ -179,9 +184,13 @@ def main() -> None:
             embedding_dim=args.embedding_dim,
             num_layers=args.num_layers,
             num_heads=args.num_heads,
+            num_kv_heads=args.num_kv_heads,
             feed_forward_dim=args.feed_forward_dim,
+            tie_embeddings=args.tie_embeddings,
         )
-        model = MiniGPT(cfg).to(device)
+        model = MiniGPT(cfg)
+        init_weights(model, cfg)
+        model = model.to(device)
 
     if args.compile and device.type == "cuda":
         print("torch.compile() — first step will be slow (graph compilation)")
@@ -196,7 +205,45 @@ def main() -> None:
     val_set = TokenDataset.from_ids(val_ids, args.seed + 1)
     print(f"train tokens={len(train_ids):,} val tokens={len(val_ids):,}")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    # LLM-standard AdamW: betas (0.9, 0.95); weight decay only on matrices,
+    # not on norms/embeddings/biases (GPT-3/LLaMA/DeepSeek practice).
+    decay_params = [p for p in model.parameters() if p.requires_grad and p.dim() >= 2]
+    nodecay_params = [p for p in model.parameters() if p.requires_grad and p.dim() < 2]
+    optimizer = torch.optim.AdamW(
+        [
+            {"params": decay_params, "weight_decay": args.weight_decay},
+            {"params": nodecay_params, "weight_decay": 0.0},
+        ],
+        lr=args.lr,
+        betas=(0.9, 0.95),
+        fused=(device.type == "cuda"),
+    )
+
+    # Resume optimizer state + step for exact continuation.
+    start_step = 0
+    best_val = float("inf")
+    opt_path = args.checkpoint / "optimizer.pt"
+    state_path = args.checkpoint / "train_state.json"
+    if state_path.exists():
+        import json as _json
+        meta = _json.loads(state_path.read_text(encoding="utf-8"))
+        start_step = int(meta.get("step", 0))
+        best_val = float(meta.get("best_val", float("inf")))
+        if opt_path.exists():
+            try:
+                optimizer.load_state_dict(torch.load(opt_path, map_location=device))
+                print(f"restored optimizer state at step {start_step}")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[warn] optimizer state mismatch ({exc}); fresh optimizer")
+    if start_step >= args.max_steps:
+        print(f"checkpoint already at step {start_step} >= max-steps {args.max_steps}")
+        return
+
+    def save_train_state(step: int) -> None:
+        import json as _json
+        torch.save(optimizer.state_dict(), opt_path)
+        state_path.write_text(_json.dumps({"step": step, "best_val": best_val}),
+                              encoding="utf-8")
 
     # Sanity probe
     x0, y0 = train_set.next_batch(args.batch_size, cfg.context_length)
@@ -206,14 +253,14 @@ def main() -> None:
 
     started = time.time()
     last_log = started
-    last_log_step = 0
+    last_log_step = start_step
     recent_loss = 0.0
     recent_count = 0
 
     amp_dtype = torch.bfloat16 if use_bf16 else torch.float32
     amp_ctx = torch.amp.autocast(device_type=device.type, dtype=amp_dtype) if use_bf16 else _NullCtx()
 
-    for step in range(1, args.max_steps + 1):
+    for step in range(start_step + 1, args.max_steps + 1):
         x_np, y_np = train_set.next_batch(args.batch_size, cfg.context_length)
         x = torch.from_numpy(x_np).to(device, non_blocking=True)
         y = torch.from_numpy(y_np).to(device, non_blocking=True)
@@ -233,11 +280,11 @@ def main() -> None:
         recent_loss += loss_v
         recent_count += 1
 
-        if step == 1 or step % args.log_every == 0:
+        if step == start_step + 1 or step % args.log_every == 0:
             now = time.time()
             avg = recent_loss / max(1, recent_count)
             ms_per_step = (now - last_log) * 1000.0 / max(1, step - last_log_step)
-            eta = (now - started) / step * (args.max_steps - step)
+            eta = (now - started) / max(1, step - start_step) * (args.max_steps - step)
             print(
                 f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
                 f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(grad_norm):.2f} lr {lr:.2e} "
@@ -251,13 +298,21 @@ def main() -> None:
         if args.val_every and step % args.val_every == 0:
             val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length,
                                args.val_batches, device)
-            print(f"[val] step {step} loss {val_loss:.4f}")
+            marker = ""
+            if val_loss < best_val:
+                best_val = val_loss
+                save_checkpoint(args.checkpoint, model, cfg,
+                                weights_name="weights_best.safetensors")
+                marker = " (best → weights_best.safetensors)"
+            print(f"[val] step {step} loss {val_loss:.4f}{marker}")
 
         if args.checkpoint_every and step % args.checkpoint_every == 0:
             save_checkpoint(args.checkpoint, model, cfg)
+            save_train_state(step)
             print(f"[checkpoint] step {step} saved to {args.checkpoint}")
 
     save_checkpoint(args.checkpoint, model, cfg)
+    save_train_state(args.max_steps)
     print(f"saved final model to {args.checkpoint}")
 
 

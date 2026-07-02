@@ -2,6 +2,10 @@
 
 Маленький GPT в стиле LLaMA, обученный с нуля на Apple GPU через MLX.
 
+> **Актуальные команды обучения для Mac mini M4 16GB — в [TRAINING_GUIDE.md](TRAINING_GUIDE.md)**:
+> QLoRA-дообучение Gemma 3 4B на русском чат-датасете (рекомендуемый путь) и
+> улучшенное обучение с нуля (bf16, GQA, tied embeddings, mx.compile, точный resume).
+
 **Архитектура:** BPE токенизация · RMSNorm · RoPE · SwiGLU · 6 transformer-блоков · ~25M параметров.
 
 ## Быстрый старт

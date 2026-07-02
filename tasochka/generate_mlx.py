@@ -66,7 +66,8 @@ def _sample_token(
     banned_ids: Optional[Set[int]] = None,
 ) -> int:
     mx.eval(logits)
-    logits_np: np.ndarray = np.array(logits).astype(np.float64)
+    # fp32 cast first: numpy can't read bf16 buffers directly
+    logits_np: np.ndarray = np.array(logits.astype(mx.float32)).astype(np.float64)
 
     # 1. Repetition penalty: pull recent tokens toward zero
     if rep_penalty != 1.0 and recent_ids:

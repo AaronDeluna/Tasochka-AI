@@ -1,0 +1,49 @@
+# QLoRA-конфиг для mlx_lm: дообучение Gemma 3 4B (4-bit QAT) на Mac mini M4 16GB.
+# Запуск: bash finetune/train_qlora.sh
+#
+# Почему так (лучшие практики):
+#   - 4-bit база (QLoRA): модель занимает ~2.7 GB вместо 8 GB bf16 —
+#     остаётся память на длинный контекст и нормальный батч.
+#     QAT-версия — Google квантовал с дообучением, качество почти как bf16.
+#   - mask_prompt: лосс считается ТОЛЬКО по ответам ассистента, модель
+#     не тратит ёмкость на заучивание вопросов пользователя.
+#   - num_layers -1: LoRA на все слои (а не 16 верхних) — при rank 16
+#     это всё ещё дёшево, но заметно лучше усваивает стиль.
+#   - grad_checkpoint: пересчёт активаций — в 2-3 раза меньше памяти,
+#     ~20-30% медленнее. На 16 GB это выгодный размен.
+#   - grad_accumulation_steps 4: эффективный батч 2*4=8 без роста памяти.
+#   - cosine decay + warmup 100: стандартное расписание LR для SFT.
+
+model: mlx-community/gemma-3-4b-it-qat-4bit
+train: true
+fine_tune_type: lora
+optimizer: adamw
+data: finetune/data_chat
+adapter_path: finetune/adapters_qlora
+seed: 42
+
+num_layers: -1
+batch_size: 2
+grad_accumulation_steps: 4
+iters: 2000
+max_seq_length: 1024
+
+learning_rate: 1.0e-4
+lr_schedule:
+  name: cosine_decay
+  warmup: 100
+  warmup_init: 1.0e-7
+  arguments: [1.0e-4, 1900, 1.0e-5]  # [начальный LR, шагов затухания, конечный LR]
+
+lora_parameters:
+  rank: 16
+  scale: 20.0
+  dropout: 0.05
+
+mask_prompt: true
+grad_checkpoint: true
+
+steps_per_report: 25
+steps_per_eval: 200
+val_batches: 25
+save_every: 250
