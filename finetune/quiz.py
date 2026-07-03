@@ -21,7 +21,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from mlx_lm import generate, load
+from mlx_lm import generate, load, stream_generate
 from mlx_lm.sample_utils import make_sampler
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,6 +29,9 @@ MODEL = os.environ.get("MODEL", "mlx-community/gemma-3-4b-it-qat-4bit")
 ADAPTERS = os.environ.get("ADAPTERS", "finetune/adapters_persona")
 MAX_TOKENS = int(os.environ.get("QUIZ_MAX_TOKENS", "200"))
 TEMP = float(os.environ.get("QUIZ_TEMP", "0.3"))
+# QUIZ_STREAM=1 (по умолчанию) — печатать ответ в терминал по мере генерации.
+# QUIZ_STREAM=0 — тихо, только прогресс (ответы всё равно пишутся в файл).
+STREAM = os.environ.get("QUIZ_STREAM", "1") != "0"
 
 IDENTITY = [
     "Как тебя зовут?", "Кто ты?", "Представься.", "Ты кто такая?",
@@ -260,8 +263,18 @@ def main() -> None:
             prompt = tokenizer.apply_chat_template(
                 [{"role": "user", "content": q}], add_generation_prompt=True
             )
-            ans = generate(model, tokenizer, prompt=prompt,
-                           max_tokens=MAX_TOKENS, sampler=sampler, verbose=False).strip()
+            if STREAM:
+                print(f"\n\033[1m{i}/{len(questions)} [{kind}] {q}\033[0m")
+                parts = []
+                for chunk in stream_generate(model, tokenizer, prompt=prompt,
+                                             max_tokens=MAX_TOKENS, sampler=sampler):
+                    print(chunk.text, end="", flush=True)
+                    parts.append(chunk.text)
+                print()
+                ans = "".join(parts).strip()
+            else:
+                ans = generate(model, tokenizer, prompt=prompt,
+                               max_tokens=MAX_TOKENS, sampler=sampler, verbose=False).strip()
             f.write(f"### {i}. [{kind}] {q}\n\n{ans}\n\n")
             f.flush()
             if kind == "identity":
