@@ -122,12 +122,12 @@ def ask(question: str, retries: int = 5) -> str | None:
                 continue
             print(f"\n[HTTP {e.code}] {question[:50]}... → {msg[:200]}")
             return None
-        except (urllib.error.URLError, TimeoutError) as e:
+        except Exception as e:  # noqa: BLE001 — SSL/сеть/парсинг: ретраим, не роняем прогон
             if attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
                 continue
-            print(f"\n[network] {question[:50]}... → {e}")
+            print(f"\n[network] {question[:50]}... → {type(e).__name__}: {e}")
             return None
     return None
 
@@ -179,7 +179,12 @@ def main() -> None:
             ThreadPoolExecutor(max_workers=WORKERS) as pool:
         futures = [pool.submit(work, q) for q in todo]
         for i, fut in enumerate(as_completed(futures), 1):
-            q, ans = fut.result()
+            try:
+                q, ans = fut.result()
+            except Exception as e:  # noqa: BLE001 — не роняем весь прогон из-за одного вопроса
+                print(f"\n[skip] {type(e).__name__}: {e}")
+                fail += 1
+                continue
             if ans:
                 rec = {"messages": [
                     {"role": "user", "content": q},
