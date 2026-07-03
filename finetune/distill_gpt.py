@@ -37,7 +37,7 @@ QUESTIONS = HERE / "distill" / "questions.txt"
 OUT = HERE / "distill" / "java_qa.jsonl"
 
 API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
-MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5-mini")
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 WORKERS = int(os.environ.get("DISTILL_WORKERS", "6"))
 MAX_TOKENS = int(os.environ.get("DISTILL_MAX_TOKENS", "900"))
 TEMP = float(os.environ.get("DISTILL_TEMP", "0.3"))
