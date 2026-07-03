@@ -185,6 +185,8 @@ def main() -> None:
                        help="Множитель числа реальных диалогов (по умолчанию из пресета).")
     parser.add_argument("--out", type=str, default=None,
                        help="Папка вывода (по умолчанию из пресета).")
+    parser.add_argument("--extra-jsonl", action="append", default=None,
+                       help="Доп. файл {messages}-JSONL (напр. дистилляция GPT). Можно несколько раз.")
     parser.add_argument("--n-valid", type=int, default=250,
                        help="Сколько реальных диалогов отложить в valid.")
     parser.add_argument("--seed", type=int, default=42)
@@ -220,6 +222,21 @@ def main() -> None:
     persona_train, persona_valid = load_persona(rng)
     train = train_real + persona_train * persona_mult
     valid = valid_real + persona_valid
+
+    # Внешние JSONL (напр. Java-датасет из дистилляции GPT): ~5% в valid.
+    for path in (args.extra_jsonl or []):
+        recs = []
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    recs.append(json.loads(line)["messages"])
+        rng.shuffle(recs)
+        n_v = max(1, len(recs) // 20)
+        valid += recs[:n_v]
+        train += recs[n_v:]
+        print(f"+ доп. источник {path}: {len(recs)} диалогов (в valid {n_v})")
+
     rng.shuffle(train)
     rng.shuffle(valid)
 

@@ -23,3 +23,6 @@ finetune/data_persona/
 corpus_ids.bin
 corpus_ids.meta
 finetune/quiz_runs/
+finetune/distill/
+finetune/data_persona_code/
+finetune/adapters_persona_code/
