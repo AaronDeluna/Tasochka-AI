@@ -22,3 +22,4 @@ finetune/data_persona/
 *.safetensors
 corpus_ids.bin
 corpus_ids.meta
+finetune/quiz_runs/
