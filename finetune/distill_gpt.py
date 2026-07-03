@@ -132,9 +132,28 @@ def ask(question: str, retries: int = 5) -> str | None:
     return None
 
 
+def list_models() -> None:
+    """Печатает доступные ключу модели (для выбора правильного имени)."""
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/models",
+        headers={"Authorization": f"Bearer {API_KEY}"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read())
+    ids = sorted(m["id"] for m in data.get("data", []))
+    chat = [m for m in ids if any(k in m for k in ("gpt", "o1", "o3", "o4", "chat"))]
+    print("Доступные chat-модели твоего ключа:")
+    for m in chat:
+        print("  ", m)
+    print(f"\nВыбери нужную и запусти:  export OPENAI_MODEL=\"<имя>\"  затем distill_gpt.py")
+
+
 def main() -> None:
     if not API_KEY:
         sys.exit("Нет ключа. Сначала: export OPENAI_API_KEY=\"sk-...\"  затем запусти снова.")
+    if "--list-models" in sys.argv:
+        list_models()
+        return
     if not QUESTIONS.exists():
         sys.exit(f"Нет файла вопросов {QUESTIONS} — сначала запусти distill_questions.py")
 
