@@ -37,7 +37,7 @@ QUESTIONS = HERE / "distill" / "questions.txt"
 OUT = HERE / "distill" / "java_qa.jsonl"
 
 API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
-MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5-mini")
 WORKERS = int(os.environ.get("DISTILL_WORKERS", "6"))
 MAX_TOKENS = int(os.environ.get("DISTILL_MAX_TOKENS", "900"))
 TEMP = float(os.environ.get("DISTILL_TEMP", "0.3"))
@@ -68,16 +68,31 @@ def load_done() -> set[str]:
     return done
 
 
-def ask(question: str, retries: int = 5) -> str | None:
-    body = json.dumps({
+# Новые модели (gpt-5.x, o1/o3/o4) хотят max_completion_tokens и часто фиксированную
+# температуру. Стартуем с этого варианта для них, а если API ругнётся на параметр —
+# на лету переключаемся. Флаги общие на весь прогон, чтобы не долбить 400 повторно.
+_NEWGEN = MODEL.startswith(("gpt-5", "o1", "o3", "o4"))
+_params = {
+    "token_key": "max_completion_tokens" if _NEWGEN else "max_tokens",
+    "send_temp": not _NEWGEN,
+}
+
+
+def _payload(question: str) -> bytes:
+    body = {
         "model": MODEL,
         "messages": [
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": question},
         ],
-        "temperature": TEMP,
-        "max_tokens": MAX_TOKENS,
-    }).encode("utf-8")
+        _params["token_key"]: MAX_TOKENS,
+    }
+    if _params["send_temp"]:
+        body["temperature"] = TEMP
+    return json.dumps(body).encode("utf-8")
+
+
+def ask(question: str, retries: int = 5) -> str | None:
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
@@ -85,8 +100,8 @@ def ask(question: str, retries: int = 5) -> str | None:
     delay = 2.0
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(ENDPOINT, data=body, headers=headers)
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            req = urllib.request.Request(ENDPOINT, data=_payload(question), headers=headers)
+            with urllib.request.urlopen(req, timeout=180) as resp:
                 data = json.loads(resp.read())
             return data["choices"][0]["message"]["content"].strip()
         except urllib.error.HTTPError as e:
@@ -94,8 +109,18 @@ def ask(question: str, retries: int = 5) -> str | None:
                 time.sleep(delay)
                 delay *= 2
                 continue
-            msg = e.read().decode("utf-8", "replace")[:200]
-            print(f"\n[HTTP {e.code}] {question[:50]}... → {msg}")
+            msg = e.read().decode("utf-8", "replace")
+            # Авто-подстройка под требования модели по параметрам.
+            low = msg.lower()
+            fixed = False
+            if "max_tokens" in low and "max_completion_tokens" in low:
+                _params["token_key"] = "max_completion_tokens"; fixed = True
+            if "temperature" in low and ("unsupported" in low or "does not support" in low
+                                          or "only the default" in low):
+                _params["send_temp"] = False; fixed = True
+            if fixed and attempt < retries - 1:
+                continue
+            print(f"\n[HTTP {e.code}] {question[:50]}... → {msg[:200]}")
             return None
         except (urllib.error.URLError, TimeoutError) as e:
             if attempt < retries - 1:

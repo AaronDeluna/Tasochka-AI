@@ -1,0 +1,5 @@
+version: v1-persona
+base_model: mlx-community/gemma-3-4b-it-qat-4bit
+adapter: adapters/
+created: 2026-07-03
+description: Персона Тасочки на Gemma 3 4B: имя, создатель Иван, отрицание Gemma. Русская речь связная. Java на уровне базовой 4B.
