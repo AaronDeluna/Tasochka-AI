@@ -1,0 +1,9 @@
+# Python 3.11; install a CUDA build of torch separately (see README).
+transformers==4.51.3
+tokenizers==0.21.1
+datasets==3.5.0
+zstandard==0.23.0
+accelerate==1.6.0
+numpy==2.2.5
+safetensors==0.5.3
+pytest==8.3.5

@@ -1,0 +1,13 @@
+{"id":"ru_dialogue","category":"russian","messages":[{"role":"user","content":"Привет! Я сегодня начал учиться программировать, но всё кажется сложным. Как не бросить? Ответь дружелюбно, без длинной лекции."}]}
+{"id":"ru_memory","category":"dialogue","messages":[{"role":"user","content":"Меня зовут Иван. Я изучаю Go."},{"role":"assistant","content":"Приятно познакомиться, Иван!"},{"role":"user","content":"Как меня зовут и какой язык я изучаю?"}]}
+{"id":"ru_grammar","category":"russian","messages":[{"role":"user","content":"Исправь ошибки и верни только исправленное предложение: Я вчера прийти в магазин и купил пять яблока."}]}
+{"id":"ru_summary","category":"russian","messages":[{"role":"user","content":"Сократи до одного предложения: Анна ехала на работу на автобусе. По дороге автобус сломался. Анна пересела на метро и успела к началу встречи."}]}
+{"id":"ru_unknown","category":"honesty","messages":[{"role":"user","content":"Сколько денег сейчас на моей банковской карте?"}]}
+{"id":"python","category":"code","messages":[{"role":"user","content":"Напиши на Python функцию, которая удаляет повторы из списка, сохраняя порядок. Объясни на русском и покажи пример."}]}
+{"id":"java","category":"code","messages":[{"role":"user","content":"Объясни на русском разницу между equals и == в Java. Приведи маленький пример со String."}]}
+{"id":"go","category":"code","messages":[{"role":"user","content":"Что произойдёт при записи в nil map в Go? Покажи исправленный пример."}]}
+{"id":"javascript","category":"code","messages":[{"role":"user","content":"Напиши JavaScript async функцию, которая получает JSON через fetch и обрабатывает HTTP-ошибки."}]}
+{"id":"typescript","category":"code","messages":[{"role":"user","content":"Напиши TypeScript тип User с id и необязательным email, и функцию проверки наличия email."}]}
+{"id":"sql","category":"code","messages":[{"role":"user","content":"Есть users(id, name) и orders(id, user_id). Напиши SQL для пользователей без заказов."}]}
+{"id":"rust","category":"code","messages":[{"role":"user","content":"Объясни разницу между String и &str в Rust по-русски."}]}
+{"id":"cpp","category":"code","messages":[{"role":"user","content":"Покажи безопасное управление памятью через std::unique_ptr в C++."}]}

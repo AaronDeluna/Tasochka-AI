@@ -1,127 +1,28 @@
 # Tasochka AI
 
-Маленький GPT в стиле LLaMA, обученный с нуля на Apple GPU через MLX.
+Собственная языковая модель с обучением **с нуля**, ориентированная на русский язык и базовые задачи программирования.
 
-**Архитектура:** BPE токенизация · RMSNorm · RoPE · SwiGLU · 6 transformer-блоков · ~25M параметров.
+- **[server/](server/README.md)** — новый Linux/NVIDIA пайплайн: **2 966 203 392 параметра (~3B)**, собственный BPE 48k, предобучение, расширение контекста **4k → 16k → 32k → 128k (131 072 токена)** и SFT.
+- **[Mac/](Mac/README.md)** — сохранённые локальные эксперименты MLX/PyTorch, старый веб-интерфейс и LoRA. Запускаются из `Mac/` и используют отдельные данные/веса.
 
-## Быстрый старт
-
-```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
-./setup.sh                # один раз
-source .venv/bin/activate
-```
-
-### Тренировка
+## Сервер: старт
 
 ```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
+bash server/setup.sh
+source server/.venv/bin/activate
+# Получить доступ к bigcode/starcoderdata на Hugging Face и авторизоваться:
+huggingface-cli login
+bash server/run.sh data
+# После проверки оборудования и короткого GPU-прогона из server/README.md:
+GPUS=8 bash server/run.sh all
 ```
 
-Первый запуск делает три вещи последовательно:
-1. Читает и чистит `.txt` файлы из `russian-train-dataset/`
-2. Тренирует BPE токенизатор (vocab=8000)
-3. Кодирует корпус в токены (кэширует на диск)
-4. Тренирует трансформер
-
-При повторном запуске токенизатор и кэш токенов подтянутся, продолжится только train.
-
-Дефолты:
-```
---max-steps 10000          # шагов
---batch-size 16            # на M4 16GB
---lr 3e-4                  # с warmup на 100 шагов
---max-dataset-chars 30M
---vocab-size 8000          # BPE
---context-length 256       # тут BPE токенов = ~600-1000 слов
---embedding-dim 512
---num-layers 6
---num-heads 8
---feed-forward-dim 1536    # SwiGLU
---val-every 200
---checkpoint-every 500
---grad-clip 1.0
---weight-decay 0.01
---warmup-steps 100
-```
-
-По умолчанию обучение берет датасеты из:
-```bash
-russian-train-dataset/*.txt
-```
-
-Можно явно указать другой файл или папку:
-```bash
-python -m tasochka.train --data russian-train-dataset --max-steps 30000 --batch-size 16
-```
-
-Полный train (что я рекомендую):
-```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
-```
-Ожидаемое время на M4: 15–30 минут.
-
-### Общение
+После завершения всех этапов:
 
 ```bash
-python -m tasochka.generate --chat
+python -m server.chat --model server/runs/sft/final
 ```
 
-Одиночный запрос:
-```bash
-python -m tasochka.generate "- Привет"
-```
+Это готовый к проверке **код обучения**, а не уже обученная модель. Качественная русская речь, код и полезная работа со 128k требуют достаточного корпуса, вычислений и оценки результата. Конфигурация 128k сама по себе их не гарантирует. Начальный бюджет предобучения — 60 млрд предъявленных токенов; это отправная точка эксперимента, а не обещание качества.
 
-Параметры:
-```bash
-python -m tasochka.generate --chat --temperature 0.7 --top-k 40 --max-new 200
-```
-
-## Веб-интерфейс (опционально)
-
-```bash
-pip install -r requirements-server.txt
-python -m tasochka.server
-open index.html
-```
-
-Сервер слушает `127.0.0.1:11434`, говорит по Ollama-протоколу (NDJSON стрим). Игнорируется при консольной работе.
-
-## Файлы чекпойнта
-
-`checkpoints/tasochka/`:
-- `tokenizer.json` — BPE
-- `config.json` — конфиг модели
-- `weights.safetensors` — веса
-- `corpus_ids.npy` — закэшированные токены корпуса (пересоздаётся если изменилось)
-
-Чтобы переучить с нуля — `rm -rf checkpoints/tasochka`.
-
-## Архитектура файлов
-
-```
-tasochka/
-├── tokenizer.py    # BPE на HuggingFace tokenizers
-├── data.py         # TXT/JSONL стрим + cleaning
-├── model.py        # MiniGPT: RMSNorm + RoPE + SwiGLU
-├── train.py        # AdamW + grad clip + warmup + checkpoints
-├── generate.py     # CLI + интерактивный чат
-└── server.py       # опциональный HTTP API
-```
-
-## Ожидаемые цифры на M4 16GB
-
-| Конфиг | Шаг | 10k шагов | val loss |
-|---|---|---|---|
-| default (25M, ctx=256, BPE) | 80–150 мс | ~15 мин | 2.5–3.0 |
-| big (50M, ctx=512) | 200–400 мс | ~50 мин | 2.2–2.5 |
-
-Char-level загнивал на val ~1.4 — это не сравнимо: разные единицы. Грубо: BPE val 2.7 ≈ char val 1.0 по качеству.
-
-## Что улучшилось vs char-level
-
-- **Связные слова всегда правильные** — BPE не может ошибиться в букве, выдаёт целое слово
-- **Длинный контекст в словах** — 256 BPE-токенов это ~150-250 русских слов, против 25-30 в char-128
-- **RoPE** даёт хорошее extrapolation за пределы контекста обучения
-- **SwiGLU** учится лучше GELU при том же бюджете параметров
-- **RMSNorm** стабильнее в FP16, чем LayerNorm
+Подробные команды, восстановление, ограничения, источники данных и проверка качества: **[server/README.md](server/README.md)**.

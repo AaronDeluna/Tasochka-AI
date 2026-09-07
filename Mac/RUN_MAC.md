@@ -9,7 +9,7 @@ Tasochka AI бежит на встроенной GPU Mac через MLX. Быс�
 Открой Terminal (или Warp/iTerm). Выполни **каждую команду по очереди**:
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
+cd "/path/to/Tasochka-AI/Mac"
 ```
 
 ```bash
@@ -50,7 +50,7 @@ caffeinate -dimsu
 ## 2. Запуск тренировки
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
+cd "/path/to/Tasochka-AI/Mac"
 ```
 
 ```bash
@@ -98,7 +98,7 @@ kill <pid из вывода выше>
 После train закончится (или прервал Ctrl+C — чекпойнт сохранён):
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
+cd "/path/to/Tasochka-AI/Mac"
 ./.venv/bin/python -m tasochka.generate --chat
 ```
 
@@ -121,7 +121,7 @@ cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
 **"ModuleNotFoundError: No module named 'mlx'"**
 → venv сломан (Apple обновил CommandLineTools). Пересоздай:
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
+cd "/path/to/Tasochka-AI/Mac"
 rm -rf .venv
 /usr/bin/python3 -m venv .venv
 ./.venv/bin/pip install mlx numpy tokenizers datasets
@@ -146,5 +146,5 @@ rm -rf checkpoints/tasochka
 Скопируй и вставь — всё что нужно в одну операцию:
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python -m tasochka.train --max-steps 150000 --batch-size 5 --context-length 512 --max-dataset-chars 5000000000 --lr 2.5e-4 --warmup-steps 2000 --min-lr-ratio 0.1
+cd "/path/to/Tasochka-AI/Mac" && ./.venv/bin/python -m tasochka.train --max-steps 150000 --batch-size 5 --context-length 512 --max-dataset-chars 5000000000 --lr 2.5e-4 --warmup-steps 2000 --min-lr-ratio 0.1
 ```

@@ -19,3 +19,17 @@ finetune/eval_runs/
 *.safetensors
 corpus_ids.bin
 corpus_ids.meta
+
+# Server artifacts
+server/data/
+server/runs/
+server/reports/
+server/smoke-output*/
+.pytest_cache/
+# Relocated Mac artifacts
+Mac/finetune/base_model/
+Mac/finetune/base_model_4bit/
+Mac/finetune/adapters/
+Mac/finetune/adapters_qlora/
+Mac/finetune/tasochka_gemma/
+Mac/finetune/eval_runs/
