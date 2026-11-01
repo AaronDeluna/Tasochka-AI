@@ -20,5 +20,6 @@
   "log_every": 50,
   "val_every": 250,
   "val_batches": 20,
-  "checkpoint_every": 500
+  "checkpoint_every": 500,
+  "snapshot_every": 2500
 }

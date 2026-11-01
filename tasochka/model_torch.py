@@ -20,6 +20,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from safetensors.torch import load_file, save_file
 
+from .checkpoint_io import atomic_write, atomic_write_text
+
 
 @dataclass
 class ModelConfig:
@@ -210,11 +212,9 @@ def save_checkpoint(directory: Path, model: MiniGPT, cfg: ModelConfig,
     model = getattr(model, "_orig_mod", model)
     # Convert state_dict to contiguous CPU tensors (safetensors requires contiguous)
     state = {k: v.detach().contiguous().cpu() for k, v in model.state_dict().items()}
-    save_file(state, str(directory / weights_name))
-    (directory / "config.json").write_text(
-        json.dumps(asdict(cfg), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write(directory / weights_name, lambda path: save_file(state, path))
+    atomic_write_text(directory / "config.json",
+                      json.dumps(asdict(cfg), ensure_ascii=False, indent=2))
 
 
 def init_weights(model: MiniGPT, cfg: ModelConfig) -> None:

@@ -47,6 +47,7 @@ from .model_mlx import (
     param_count,
     save_checkpoint,
 )
+from .checkpoint_io import atomic_write, atomic_write_text, interrupt_on_termination, save_snapshot
 from .config import parse_args_with_config
 from .tokenizer import BPETokenizer
 
@@ -91,6 +92,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-batches", type=int, default=8)
     parser.add_argument("--log-every", type=int, default=20)
     parser.add_argument("--checkpoint-every", type=int, default=500)
+    parser.add_argument("--snapshot-every", type=int, default=0,
+                       help="Каждые N шагов копировать веса в <checkpoint>/snapshots/step_N/ "
+                            "для отката (0 = выкл). Должно быть кратно --checkpoint-every.")
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--context-length", type=int, default=256)
     parser.add_argument("--embedding-dim", type=int, default=896)
@@ -183,10 +187,10 @@ def save_train_state(directory: Path, optimizer, step: int, best_val: float,
                      save_optimizer: bool) -> None:
     if save_optimizer:
         flat = dict(tree_flatten(optimizer.state))
-        mx.save_safetensors(str(directory / "optimizer.safetensors"), flat)
-    (directory / "train_state.json").write_text(
-        json.dumps({"step": step, "best_val": best_val}), encoding="utf-8"
-    )
+        atomic_write(directory / "optimizer.safetensors",
+                     lambda path: mx.save_safetensors(path, flat))
+    atomic_write_text(directory / "train_state.json",
+                      json.dumps({"step": step, "best_val": best_val}))
 
 
 def _fill_state(node, saved: dict, prefix: str = "") -> None:
@@ -362,64 +366,79 @@ def main() -> None:
     recent_loss = 0.0
     recent_count = 0
 
-    for step in range(start_step + 1, args.max_steps + 1):
-        lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
-        optimizer.learning_rate = lr
+    def save_all(step: int) -> None:
+        # Weights first, then the step counter: if we die in between, resume
+        # restarts from the older step with newer weights — harmless.
+        save_checkpoint(args.checkpoint, model, cfg, params=master)
+        save_train_state(args.checkpoint, optimizer, step, best_val,
+                         not args.no_save_optimizer)
 
-        if args.grad_accum > 1:
-            batches = []
-            for _ in range(args.grad_accum):
-                bx, by = train_set.next_batch(args.batch_size, cfg.context_length)
-                batches.append((mx.array(bx), mx.array(by)))
-            loss, norm = accum_step(batches)
+    interrupt_on_termination()
+    done_step = start_step
+    try:
+        for step in range(start_step + 1, args.max_steps + 1):
+            lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
+            optimizer.learning_rate = lr
+
+            if args.grad_accum > 1:
+                batches = []
+                for _ in range(args.grad_accum):
+                    bx, by = train_set.next_batch(args.batch_size, cfg.context_length)
+                    batches.append((mx.array(bx), mx.array(by)))
+                loss, norm = accum_step(batches)
+            else:
+                x, y = train_set.next_batch(args.batch_size, cfg.context_length)
+                loss, norm = train_step(mx.array(x), mx.array(y))
+            mx.eval(loss, norm, state)
+            loss_v = loss.item()
+            recent_loss += loss_v
+            recent_count += 1
+
+            if step == start_step + 1 or step % args.log_every == 0:
+                now = time.time()
+                avg = recent_loss / max(1, recent_count)
+                steps_done = max(1, step - last_log_step)
+                ms_per_step = (now - last_log) * 1000.0 / steps_done
+                tok_s = tokens_per_step * steps_done / max(1e-6, now - last_log)
+                done = step - start_step
+                eta = (now - started) / done * (args.max_steps - step)
+                print(
+                    f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
+                    f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(norm):.2f} lr {lr:.2e} "
+                    f"{ms_per_step:.0f} ms/step {tok_s / 1000:.1f}k tok/s ETA {format_duration(eta)}"
+                )
+                last_log = now
+                last_log_step = step
+                recent_loss = 0.0
+                recent_count = 0
+
+            if args.val_every and step % args.val_every == 0:
+                val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length, args.val_batches)
+                marker = ""
+                if val_loss < best_val:
+                    best_val = val_loss
+                    save_checkpoint(args.checkpoint, model, cfg,
+                                    weights_name="weights_best.safetensors",
+                                    params=master)
+                    marker = " (best → weights_best.safetensors)"
+                print(f"[val] step {step} loss {val_loss:.4f}{marker}")
+
+            if args.checkpoint_every and step % args.checkpoint_every == 0:
+                save_all(step)
+                print(f"[checkpoint] step {step} saved to {args.checkpoint}")
+                if args.snapshot_every and step % args.snapshot_every == 0:
+                    print(f"[snapshot] {save_snapshot(args.checkpoint, step)}")
+            done_step = step
+    except KeyboardInterrupt:
+        if done_step > start_step:
+            save_all(done_step)
+            print(f"\n[interrupted] step {done_step} saved to {args.checkpoint}; "
+                  f"rerun the same command to resume")
         else:
-            x, y = train_set.next_batch(args.batch_size, cfg.context_length)
-            loss, norm = train_step(mx.array(x), mx.array(y))
-        mx.eval(loss, norm, state)
-        loss_v = loss.item()
-        recent_loss += loss_v
-        recent_count += 1
+            print("\n[interrupted] nothing to save yet")
+        return
 
-        if step == start_step + 1 or step % args.log_every == 0:
-            now = time.time()
-            avg = recent_loss / max(1, recent_count)
-            steps_done = max(1, step - last_log_step)
-            ms_per_step = (now - last_log) * 1000.0 / steps_done
-            tok_s = tokens_per_step * steps_done / max(1e-6, now - last_log)
-            done = step - start_step
-            eta = (now - started) / done * (args.max_steps - step)
-            print(
-                f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
-                f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(norm):.2f} lr {lr:.2e} "
-                f"{ms_per_step:.0f} ms/step {tok_s / 1000:.1f}k tok/s ETA {format_duration(eta)}"
-            )
-            last_log = now
-            last_log_step = step
-            recent_loss = 0.0
-            recent_count = 0
-
-        if args.val_every and step % args.val_every == 0:
-            val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length, args.val_batches)
-            marker = ""
-            if val_loss < best_val:
-                best_val = val_loss
-                save_checkpoint(args.checkpoint, model, cfg,
-                                weights_name="weights_best.safetensors",
-                                params=master)
-                marker = " (best → weights_best.safetensors)"
-            print(f"[val] step {step} loss {val_loss:.4f}{marker}")
-
-        if args.checkpoint_every and step % args.checkpoint_every == 0:
-            save_checkpoint(args.checkpoint, model, cfg,
-                            params=master)
-            save_train_state(args.checkpoint, optimizer, step, best_val,
-                             not args.no_save_optimizer)
-            print(f"[checkpoint] step {step} saved to {args.checkpoint}")
-
-    save_checkpoint(args.checkpoint, model, cfg,
-                    params=master)
-    save_train_state(args.checkpoint, optimizer, args.max_steps, best_val,
-                     not args.no_save_optimizer)
+    save_all(args.max_steps)
     print(f"saved final model to {args.checkpoint}")
 
 

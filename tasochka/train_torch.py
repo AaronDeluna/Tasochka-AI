@@ -31,6 +31,7 @@ from .model_torch import (
     pick_device,
     save_checkpoint,
 )
+from .checkpoint_io import atomic_write, atomic_write_text, interrupt_on_termination, save_snapshot
 from .config import parse_args_with_config
 from .tokenizer import BPETokenizer
 
@@ -61,6 +62,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-batches", type=int, default=8)
     parser.add_argument("--log-every", type=int, default=20)
     parser.add_argument("--checkpoint-every", type=int, default=500)
+    parser.add_argument("--snapshot-every", type=int, default=0,
+                       help="Каждые N шагов копировать веса в <checkpoint>/snapshots/step_N/ "
+                            "для отката (0 = выкл). Должно быть кратно --checkpoint-every.")
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--context-length", type=int, default=256)
     parser.add_argument("--embedding-dim", type=int, default=896)
@@ -266,9 +270,14 @@ def main() -> None:
 
     def save_train_state(step: int) -> None:
         import json as _json
-        torch.save(optimizer.state_dict(), opt_path)
-        state_path.write_text(_json.dumps({"step": step, "best_val": best_val}),
-                              encoding="utf-8")
+        atomic_write(opt_path, lambda path: torch.save(optimizer.state_dict(), path))
+        atomic_write_text(state_path, _json.dumps({"step": step, "best_val": best_val}))
+
+    def save_all(step: int) -> None:
+        # Weights first, then the step counter: if we die in between, resume
+        # restarts from the older step with newer weights — harmless.
+        save_checkpoint(args.checkpoint, model, cfg)
+        save_train_state(step)
 
     # Sanity probe
     x0, y0 = train_set.next_batch(args.batch_size, cfg.context_length)
@@ -287,64 +296,76 @@ def main() -> None:
     amp_dtype = torch.bfloat16 if use_bf16 else torch.float32
     amp_ctx = torch.amp.autocast(device_type=device.type, dtype=amp_dtype) if use_bf16 else _NullCtx()
 
-    for step in range(start_step + 1, args.max_steps + 1):
-        lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
-        for pg in optimizer.param_groups:
-            pg["lr"] = lr
+    interrupt_on_termination()
+    done_step = start_step
+    try:
+        for step in range(start_step + 1, args.max_steps + 1):
+            lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
+            for pg in optimizer.param_groups:
+                pg["lr"] = lr
 
-        # Gradient accumulation: run `grad_accum` micro-batches, dividing each
-        # loss so the accumulated gradient equals the mean over the full
-        # effective batch (batch_size * grad_accum) before a single step.
-        optimizer.zero_grad(set_to_none=True)
-        step_loss = torch.zeros((), device=device, dtype=torch.float32)
-        for _ in range(args.grad_accum):
-            x_np, y_np = train_set.next_batch(args.batch_size, cfg.context_length)
-            x = torch.from_numpy(x_np).to(device, non_blocking=True)
-            y = torch.from_numpy(y_np).to(device, non_blocking=True)
-            with amp_ctx:
-                loss = model.loss(x, y) / args.grad_accum
-            loss.backward()
-            step_loss += loss.detach().float()
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-        optimizer.step()
+            # Gradient accumulation: run `grad_accum` micro-batches, dividing each
+            # loss so the accumulated gradient equals the mean over the full
+            # effective batch (batch_size * grad_accum) before a single step.
+            optimizer.zero_grad(set_to_none=True)
+            step_loss = torch.zeros((), device=device, dtype=torch.float32)
+            for _ in range(args.grad_accum):
+                x_np, y_np = train_set.next_batch(args.batch_size, cfg.context_length)
+                x = torch.from_numpy(x_np).to(device, non_blocking=True)
+                y = torch.from_numpy(y_np).to(device, non_blocking=True)
+                with amp_ctx:
+                    loss = model.loss(x, y) / args.grad_accum
+                loss.backward()
+                step_loss += loss.detach().float()
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+            optimizer.step()
 
-        loss_sum += step_loss
-        recent_count += 1
+            loss_sum += step_loss
+            recent_count += 1
 
-        if step == start_step + 1 or step % args.log_every == 0:
-            now = time.time()
-            loss_v = step_loss.item()  # full-step loss, not the last micro-batch
-            avg = loss_sum.item() / max(1, recent_count)
-            ms_per_step = (now - last_log) * 1000.0 / max(1, step - last_log_step)
-            eta = (now - started) / max(1, step - start_step) * (args.max_steps - step)
-            print(
-                f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
-                f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(grad_norm):.2f} lr {lr:.2e} "
-                f"{ms_per_step:.0f} ms/step ETA {format_duration(eta)}"
-            )
-            last_log = now
-            last_log_step = step
-            loss_sum = torch.zeros((), device=device, dtype=torch.float32)
-            recent_count = 0
+            if step == start_step + 1 or step % args.log_every == 0:
+                now = time.time()
+                loss_v = step_loss.item()  # full-step loss, not the last micro-batch
+                avg = loss_sum.item() / max(1, recent_count)
+                ms_per_step = (now - last_log) * 1000.0 / max(1, step - last_log_step)
+                eta = (now - started) / max(1, step - start_step) * (args.max_steps - step)
+                print(
+                    f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
+                    f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(grad_norm):.2f} lr {lr:.2e} "
+                    f"{ms_per_step:.0f} ms/step ETA {format_duration(eta)}"
+                )
+                last_log = now
+                last_log_step = step
+                loss_sum = torch.zeros((), device=device, dtype=torch.float32)
+                recent_count = 0
 
-        if args.val_every and step % args.val_every == 0:
-            val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length,
-                               args.val_batches, device)
-            marker = ""
-            if val_loss < best_val:
-                best_val = val_loss
-                save_checkpoint(args.checkpoint, model, cfg,
-                                weights_name="weights_best.safetensors")
-                marker = " (best → weights_best.safetensors)"
-            print(f"[val] step {step} loss {val_loss:.4f}{marker}")
+            if args.val_every and step % args.val_every == 0:
+                val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length,
+                                   args.val_batches, device)
+                marker = ""
+                if val_loss < best_val:
+                    best_val = val_loss
+                    save_checkpoint(args.checkpoint, model, cfg,
+                                    weights_name="weights_best.safetensors")
+                    marker = " (best → weights_best.safetensors)"
+                print(f"[val] step {step} loss {val_loss:.4f}{marker}")
 
-        if args.checkpoint_every and step % args.checkpoint_every == 0:
-            save_checkpoint(args.checkpoint, model, cfg)
-            save_train_state(step)
-            print(f"[checkpoint] step {step} saved to {args.checkpoint}")
+            if args.checkpoint_every and step % args.checkpoint_every == 0:
+                save_all(step)
+                print(f"[checkpoint] step {step} saved to {args.checkpoint}")
+                if args.snapshot_every and step % args.snapshot_every == 0:
+                    print(f"[snapshot] {save_snapshot(args.checkpoint, step)}")
+            done_step = step
+    except KeyboardInterrupt:
+        if done_step > start_step:
+            save_all(done_step)
+            print(f"\n[interrupted] step {done_step} saved to {args.checkpoint}; "
+                  f"rerun the same command to resume")
+        else:
+            print("\n[interrupted] nothing to save yet")
+        return
 
-    save_checkpoint(args.checkpoint, model, cfg)
-    save_train_state(args.max_steps)
+    save_all(args.max_steps)
     print(f"saved final model to {args.checkpoint}")
 
 

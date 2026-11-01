@@ -27,6 +27,8 @@ from pathlib import Path
 import mlx.core as mx
 import mlx.nn as nn
 
+from .checkpoint_io import atomic_write, atomic_write_text
+
 
 @dataclass
 class ModelConfig:
@@ -210,11 +212,9 @@ def save_checkpoint(directory: Path, model: MiniGPT, cfg: ModelConfig,
     weights = dict(model.parameters()) if params is None else params
     flat: dict = {}
     _flatten(weights, "", flat)
-    mx.save_safetensors(str(directory / weights_name), flat)
-    (directory / "config.json").write_text(
-        json.dumps(asdict(cfg), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write(directory / weights_name, lambda path: mx.save_safetensors(path, flat))
+    atomic_write_text(directory / "config.json",
+                      json.dumps(asdict(cfg), ensure_ascii=False, indent=2))
 
 
 def load_checkpoint(directory: Path) -> tuple[MiniGPT, ModelConfig]:
