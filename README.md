@@ -1,62 +1,65 @@
 # Tasochka AI
 
-Русскоязычный ассистент «Тасочка». Два независимых проекта в одном репозитории:
+Свой ИИ-ассистент общего назначения, обученный **с нуля**: LLaMA-подобный
+трансформер (BPE · RMSNorm · RoPE · SwiGLU · GQA · tied embeddings · bf16).
+Сейчас целимся в **английский** язык. Порядок работы: короткая проверка на Mac
+(MLX), затем полноценный прогон на сервере с NVIDIA GPU (PyTorch). Код и флаги
+у обоих бэкендов общие.
 
-```
-Tasochka AI/
-├── finetune/                ← ПУТЬ 1 (рекомендуемый): QLoRA-дообучение Gemma 3 4B.
-│                              Модель после этого нормально общается по-русски.
-├── from-scratch/            ← ПУТЬ 2 (учебный): свой мини-GPT с нуля на MLX/PyTorch.
-│   ├── tasochka/              Код модели и тренера.
-│   └── checkpoints/           Чекпойнты (не в git).
-├── russian-train-dataset/   ← Общие данные для обоих путей (не в git, ~8.5 GB).
-├── download_datasets.py     ← Скачивает датасеты с HuggingFace в russian-train-dataset/.
-├── TRAINING_GUIDE.md        ← ГЛАВНЫЙ ДОК: готовые команды для Mac mini M4 16GB.
-└── .venv/                   ← Общее окружение (./setup.sh).
-```
+**Пошаговая инструкция: [docs/HOWTO.md](docs/HOWTO.md)** · сервер: [docs/SERVER.md](docs/SERVER.md)
 
-**Все команды запуска — в [TRAINING_GUIDE.md](TRAINING_GUIDE.md).** Коротко:
+## Быстрый старт (Mac)
 
-## Путь 1: QLoRA — ассистент, который умеет разговаривать (~2-4 часа)
+Все команды запускаются из корня проекта.
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./.venv/bin/python finetune/build_chat_dataset.py
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && bash finetune/train_qlora.sh
-bash finetune/chat.sh "Привет! Как тебя зовут?"
+./setup.sh && source .venv/bin/activate
 ```
-
-Детали: [finetune/README.md](finetune/README.md).
-
-## Путь 2: свой GPT с нуля (учебный)
-
-BPE токенизация · RMSNorm · RoPE · SwiGLU · GQA · tied embeddings · bf16 · mx.compile.
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.train --bf16 --tie-embeddings --embedding-dim 768 --num-layers 12 --num-heads 12 --num-kv-heads 4 --feed-forward-dim 2048 --context-length 512 --batch-size 8 --grad-accum 2 --max-steps 30000 --lr 3e-4 --warmup-steps 1000 --max-dataset-chars 2000000000
+python scripts/download_en.py --preset mac
 ```
-
-Общение и веб-интерфейс:
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.generate --chat
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI/from-scratch" && ../.venv/bin/python -m tasochka.server
+python -m tasochka.train --config configs/mac-smoke.json
 ```
-
-(веб-чат: открой `from-scratch/index.html`, сервер говорит по Ollama-протоколу на 127.0.0.1:11434)
-
-## Первичная настройка (один раз)
 
 ```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI" && ./setup.sh
+python -m tasochka.generate --checkpoint checkpoints/mac-smoke --chat
 ```
 
-Датасеты (если ещё не скачаны): `./.venv/bin/python download_datasets.py`
+Smoke-тест идёт ~1 минуту и проверяет конвейер целиком. Часовая проверка запускается
+пресетом `configs/mac-1h.json`.
+
+## Структура
+
+```
+tasochka/            пакет: модель, обучение, генерация, сервер (MLX + PyTorch)
+  train.py             точка входа обучения → train_mlx.py / train_torch.py
+  generate.py          генерация и чат → generate_mlx.py / generate_torch.py
+  model_*.py           архитектура (одинаковая на обоих бэкендах)
+  data.py              потоковое чтение, очистка и смешивание корпуса
+  tokenizer.py         BPE (HuggingFace tokenizers)
+  config.py            загрузка JSON-пресетов (--config)
+  eval.py              фиксированный набор промптов (--lang en|ru)
+  server.py            HTTP API по протоколу Ollama для web/index.html
+configs/             пресеты обучения: mac-smoke · mac-1h · server-125m
+scripts/
+  download_en.py       английский датасет: FineWeb-Edu + smol-smoltalk
+  download_ru.py       русские датасеты (прошлая версия проекта)
+  ru_*.py              русская персона «Тасочка» (seed / self-awareness)
+web/index.html       веб-чат
+requirements/        base.txt (Mac/MLX) · torch.txt (сервер) · server.txt (веб-API)
+docs/                HOWTO.md · SERVER.md · archive/ (документация русской версии)
+datasets/            данные, не в git: en/<источник>/*.txt, ru/<источник>/*.txt
+checkpoints/         чекпойнты, не в git: checkpoints/<имя-прогона>/
+```
 
 ## Ожидания по качеству
 
-- **QLoRA (Путь 1)**: уровень нормального ассистента — связная русская речь,
-  держит контекст, знает что она «Тасочка». Это готовая 4B-модель, дообученная
-  под персону на отфильтрованных русских диалогах.
-- **С нуля (Путь 2)**: 80-200M параметров на домашнем железе = «пишет осмысленные
-  предложения, держит тему 2-3 реплики». Это учебный проект про то, как LLM
-  устроены изнутри, а не замена ChatGPT.
+Модель на 16M параметров после часа на MacBook пишет грамматичный, но
+бессвязный английский. Её задача — подтвердить, что обучение идёт правильно.
+Модель на ~125M параметров после сервера держит тему и отвечает в формате
+ассистента, но фактов почти не знает: это уровень GPT-2 small. Чтобы
+приблизиться к ChatGPT, понадобятся модели на 1B+ параметров, сотни миллиардов
+токенов и отдельные стадии SFT/RLHF. Текущий конвейер — фундамент для этого.
