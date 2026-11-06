@@ -1,127 +1,65 @@
 # Tasochka AI
 
-Маленький GPT в стиле LLaMA, обученный с нуля на Apple GPU через MLX.
+Свой ИИ-ассистент общего назначения, обученный **с нуля**: LLaMA-подобный
+трансформер (BPE · RMSNorm · RoPE · SwiGLU · GQA · tied embeddings · bf16).
+Сейчас целимся в **английский** язык. Порядок работы: короткая проверка на Mac
+(MLX), затем полноценный прогон на сервере с NVIDIA GPU (PyTorch). Код и флаги
+у обоих бэкендов общие.
 
-**Архитектура:** BPE токенизация · RMSNorm · RoPE · SwiGLU · 6 transformer-блоков · ~25M параметров.
+**Пошаговая инструкция: [docs/HOWTO.md](docs/HOWTO.md)** · сервер: [docs/SERVER.md](docs/SERVER.md)
 
-## Быстрый старт
+## Быстрый старт (Mac)
 
-```bash
-cd "/Users/ivanmilovanov/Desktop/Tasochka AI"
-./setup.sh                # один раз
-source .venv/bin/activate
-```
-
-### Тренировка
+Все команды запускаются из корня проекта.
 
 ```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
+./setup.sh && source .venv/bin/activate
 ```
-
-Первый запуск делает три вещи последовательно:
-1. Читает и чистит `.txt` файлы из `russian-train-dataset/`
-2. Тренирует BPE токенизатор (vocab=8000)
-3. Кодирует корпус в токены (кэширует на диск)
-4. Тренирует трансформер
-
-При повторном запуске токенизатор и кэш токенов подтянутся, продолжится только train.
-
-Дефолты:
-```
---max-steps 10000          # шагов
---batch-size 16            # на M4 16GB
---lr 3e-4                  # с warmup на 100 шагов
---max-dataset-chars 30M
---vocab-size 8000          # BPE
---context-length 256       # тут BPE токенов = ~600-1000 слов
---embedding-dim 512
---num-layers 6
---num-heads 8
---feed-forward-dim 1536    # SwiGLU
---val-every 200
---checkpoint-every 500
---grad-clip 1.0
---weight-decay 0.01
---warmup-steps 100
-```
-
-По умолчанию обучение берет датасеты из:
-```bash
-russian-train-dataset/*.txt
-```
-
-Можно явно указать другой файл или папку:
-```bash
-python -m tasochka.train --data russian-train-dataset --max-steps 30000 --batch-size 16
-```
-
-Полный train (что я рекомендую):
-```bash
-python -m tasochka.train --max-steps 30000 --batch-size 16
-```
-Ожидаемое время на M4: 15–30 минут.
-
-### Общение
 
 ```bash
-python -m tasochka.generate --chat
+python scripts/download_en.py --preset mac
 ```
-
-Одиночный запрос:
-```bash
-python -m tasochka.generate "- Привет"
-```
-
-Параметры:
-```bash
-python -m tasochka.generate --chat --temperature 0.7 --top-k 40 --max-new 200
-```
-
-## Веб-интерфейс (опционально)
 
 ```bash
-pip install -r requirements-server.txt
-python -m tasochka.server
-open index.html
+python -m tasochka.train --config configs/mac-smoke.json
 ```
 
-Сервер слушает `127.0.0.1:11434`, говорит по Ollama-протоколу (NDJSON стрим). Игнорируется при консольной работе.
-
-## Файлы чекпойнта
-
-`checkpoints/tasochka/`:
-- `tokenizer.json` — BPE
-- `config.json` — конфиг модели
-- `weights.safetensors` — веса
-- `corpus_ids.npy` — закэшированные токены корпуса (пересоздаётся если изменилось)
-
-Чтобы переучить с нуля — `rm -rf checkpoints/tasochka`.
-
-## Архитектура файлов
-
-```
-tasochka/
-├── tokenizer.py    # BPE на HuggingFace tokenizers
-├── data.py         # TXT/JSONL стрим + cleaning
-├── model.py        # MiniGPT: RMSNorm + RoPE + SwiGLU
-├── train.py        # AdamW + grad clip + warmup + checkpoints
-├── generate.py     # CLI + интерактивный чат
-└── server.py       # опциональный HTTP API
+```bash
+python -m tasochka.generate --checkpoint checkpoints/mac-smoke --chat
 ```
 
-## Ожидаемые цифры на M4 16GB
+Smoke-тест идёт ~1 минуту и проверяет конвейер целиком. Часовая проверка запускается
+пресетом `configs/mac-1h.json`.
 
-| Конфиг | Шаг | 10k шагов | val loss |
-|---|---|---|---|
-| default (25M, ctx=256, BPE) | 80–150 мс | ~15 мин | 2.5–3.0 |
-| big (50M, ctx=512) | 200–400 мс | ~50 мин | 2.2–2.5 |
+## Структура
 
-Char-level загнивал на val ~1.4 — это не сравнимо: разные единицы. Грубо: BPE val 2.7 ≈ char val 1.0 по качеству.
+```
+tasochka/            пакет: модель, обучение, генерация, сервер (MLX + PyTorch)
+  train.py             точка входа обучения → train_mlx.py / train_torch.py
+  generate.py          генерация и чат → generate_mlx.py / generate_torch.py
+  model_*.py           архитектура (одинаковая на обоих бэкендах)
+  data.py              потоковое чтение, очистка и смешивание корпуса
+  tokenizer.py         BPE (HuggingFace tokenizers)
+  config.py            загрузка JSON-пресетов (--config)
+  eval.py              фиксированный набор промптов (--lang en|ru)
+  server.py            HTTP API по протоколу Ollama для web/index.html
+configs/             пресеты обучения: mac-smoke · mac-1h · server-125m
+scripts/
+  download_en.py       английский датасет: FineWeb-Edu + smol-smoltalk
+  download_ru.py       русские датасеты (прошлая версия проекта)
+  ru_*.py              русская персона «Тасочка» (seed / self-awareness)
+web/index.html       веб-чат
+requirements/        base.txt (Mac/MLX) · torch.txt (сервер) · server.txt (веб-API)
+docs/                HOWTO.md · SERVER.md · archive/ (документация русской версии)
+datasets/            данные, не в git: en/<источник>/*.txt, ru/<источник>/*.txt
+checkpoints/         чекпойнты, не в git: checkpoints/<имя-прогона>/
+```
 
-## Что улучшилось vs char-level
+## Ожидания по качеству
 
-- **Связные слова всегда правильные** — BPE не может ошибиться в букве, выдаёт целое слово
-- **Длинный контекст в словах** — 256 BPE-токенов это ~150-250 русских слов, против 25-30 в char-128
-- **RoPE** даёт хорошее extrapolation за пределы контекста обучения
-- **SwiGLU** учится лучше GELU при том же бюджете параметров
-- **RMSNorm** стабильнее в FP16, чем LayerNorm
+Модель на 16M параметров после часа на MacBook пишет грамматичный, но
+бессвязный английский. Её задача — подтвердить, что обучение идёт правильно.
+Модель на ~125M параметров после сервера держит тему и отвечает в формате
+ассистента, но фактов почти не знает: это уровень GPT-2 small. Чтобы
+приблизиться к ChatGPT, понадобятся модели на 1B+ параметров, сотни миллиардов
+токенов и отдельные стадии SFT/RLHF. Текущий конвейер — фундамент для этого.

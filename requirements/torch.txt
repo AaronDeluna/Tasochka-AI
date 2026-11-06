@@ -1,5 +1,5 @@
 # PyTorch backend dependencies.
-# Install with: pip install -r requirements-torch.txt
+# Install with: pip install -r requirements/torch.txt
 #
 # Use this on:
 #   * Linux/Windows servers with NVIDIA GPU (CUDA build)
@@ -23,3 +23,4 @@ torch>=2.4
 safetensors>=0.4
 numpy>=1.26
 tokenizers>=0.20
+datasets>=2.19

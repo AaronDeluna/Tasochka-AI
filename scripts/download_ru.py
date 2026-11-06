@@ -1,8 +1,9 @@
 """Download high-quality Russian dialogue datasets from HuggingFace
 and convert to the <user>/<assistant> format used by the existing training data.
 
-Output files are written into russian-train-dataset/ alongside the existing ones,
-so the next `python -m tasochka.train` run will pick them up automatically.
+Each dataset is written into its own subfolder: datasets/ru/<source>/<name>.txt.
+The trainer reads datasets/ recursively, so the next `python -m tasochka.train`
+run with `--data datasets/ru` picks up everything automatically.
 """
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ from pathlib import Path
 
 from datasets import load_dataset
 
-OUT_DIR = Path(__file__).resolve().parent / "russian-train-dataset"
+OUT_DIR = Path(__file__).resolve().parent.parent / "datasets" / "ru"
 
 
 def format_turn(role: str, content: str) -> str:
@@ -209,6 +210,51 @@ def dump_wikipedia_ru(out_path: Path, max_chars: int = 3_000_000_000) -> int:
     return chars
 
 
+def dump_web_ru(out_path: Path, max_chars: int = 5_000_000_000) -> int:
+    """HuggingFaceFW/fineweb-2 (rus_Cyrl) — большой чистый русский веб-корпус.
+
+    Это ГЛАВНЫЙ источник объёма для крупной модели (1B и выше): современный,
+    дедуплицированный, качественно отфильтрованный текст из веба. Стримится,
+    поэтому качаем ровно `max_chars` символов и ни байтом больше — удобно
+    подгонять под свободное место на диске.
+
+    Как и Wikipedia — это pretraining-текст, БЕЗ <user>/<assistant> тегов.
+
+    Ориентир по объёму (сколько текста нужно правилу Chinchilla ~20 ток/парам):
+      * ~200-300M модель  → 5-8 GB  (~1.5-2 B токенов)
+      * ~1B модель        → 60-90 GB (~15-20 B токенов)
+    На Mac (мало диска) ставь --web-max-chars 3_000_000_000 (~3 GB) для теста,
+    на сервере — большой лимит под полный прогон.
+    """
+    print(f"streaming HuggingFaceFW/fineweb-2 rus_Cyrl → {out_path.name} "
+          f"(cap {max_chars / 1e9:.1f} GB)")
+    print("  (первое разрешение шардов может занять несколько минут — это норма)")
+    ds = load_dataset("HuggingFaceFW/fineweb-2", name="rus_Cyrl",
+                      split="train", streaming=True)
+    written = 0
+    chars = 0
+    with out_path.open("w", encoding="utf-8") as f:
+        try:
+            for item in ds:
+                if chars >= max_chars:
+                    break
+                text = (item.get("text") or "").strip()
+                if len(text) < 200:  # выкидываем совсем короткие обрывки
+                    continue
+                block = f"{text}\n\n"
+                f.write(block)
+                chars += len(block)
+                written += 1
+                if written % 20000 == 0:
+                    print(f"  {written} docs, {chars / 1e9:.2f} GB")
+        except Exception as e:  # SSL/сеть могут оборваться на долгой закачке
+            f.flush()
+            print(f"  ⚠️  обрыв на {chars / 1e9:.2f} GB ({type(e).__name__}: {e}). "
+                  f"Уже скачанное сохранено — перезапусти скрипт, чтобы докачать.")
+    print(f"web_ru done: {written} docs, {chars / 1e9:.2f} GB")
+    return chars
+
+
 def dump_veles(out_path: Path, max_items: int | None = None) -> int:
     """Vikhrmodels/Veles-2.5 — high-quality multi-turn Russian (translated)."""
     print(f"streaming Vikhrmodels/Veles-2.5 → {out_path.name}")
@@ -275,10 +321,15 @@ def main() -> None:
     parser.add_argument("--skip-alpaca", action="store_true")
     parser.add_argument("--skip-prefs", action="store_true")
     parser.add_argument("--skip-wiki", action="store_true")
+    parser.add_argument("--skip-web", action="store_true",
+                       help="Пропустить большой веб-корпус FineWeb-2 (по умолчанию качается)")
     parser.add_argument("--skip-veles", action="store_true")
     parser.add_argument("--skip-dialogues", action="store_true")
     parser.add_argument("--wiki-max-chars", type=int, default=3_000_000_000,
                        help="Cap Wikipedia output size (bytes/chars). 3 GB default.")
+    parser.add_argument("--web-max-chars", type=int, default=5_000_000_000,
+                       help="Лимит веб-корпуса FineWeb-2 в символах. 5 GB по умолч.; "
+                            "на Mac ставь 3_000_000_000, на сервере — 60-90 млрд для 1B.")
     parser.add_argument("--saiga-min-score", type=int, default=7,
                        help="Saiga conversations with opus_score below this are skipped")
     parser.add_argument("--max-items", type=int, default=None,
@@ -286,23 +337,31 @@ def main() -> None:
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
+    def dst(subdir: str, name: str) -> Path:
+        """Каждый датасет — в свою подпапку datasets/<subdir>/<name>."""
+        d = args.out_dir / subdir
+        d.mkdir(parents=True, exist_ok=True)
+        return d / name
+
     total = 0
     if not args.skip_saiga:
-        total += dump_saiga(args.out_dir / "saiga_chat.txt", args.saiga_min_score, args.max_items)
+        total += dump_saiga(dst("saiga", "saiga_chat.txt"), args.saiga_min_score, args.max_items)
     if not args.skip_grandmaster:
-        total += dump_grandmaster(args.out_dir / "grandmaster_chat.txt", args.max_items)
+        total += dump_grandmaster(dst("grandmaster", "grandmaster_chat.txt"), args.max_items)
     if not args.skip_gsm8k:
-        total += dump_gsm8k_ru(args.out_dir / "gsm8k_chat.txt", args.max_items)
+        total += dump_gsm8k_ru(dst("gsm8k", "gsm8k_chat.txt"), args.max_items)
     if not args.skip_alpaca:
-        total += dump_alpaca_ru(args.out_dir / "alpaca_ru_chat.txt", args.max_items)
+        total += dump_alpaca_ru(dst("alpaca_ru", "alpaca_ru_chat.txt"), args.max_items)
     if not args.skip_prefs:
-        total += dump_saiga_prefs(args.out_dir / "saiga_prefs_chat.txt", args.max_items)
+        total += dump_saiga_prefs(dst("saiga_prefs", "saiga_prefs_chat.txt"), args.max_items)
     if not args.skip_wiki:
-        total += dump_wikipedia_ru(args.out_dir / "wikipedia_ru.txt", args.wiki_max_chars)
+        total += dump_wikipedia_ru(dst("wikipedia", "wikipedia_ru.txt"), args.wiki_max_chars)
+    if not args.skip_web:
+        total += dump_web_ru(dst("web_ru", "web_ru.txt"), args.web_max_chars)
     if not args.skip_veles:
-        total += dump_veles(args.out_dir / "veles_chat.txt", args.max_items)
+        total += dump_veles(dst("veles", "veles_chat.txt"), args.max_items)
     if not args.skip_dialogues:
-        total += dump_russian_dialogues(args.out_dir / "russian_dialogues_chat.txt", args.max_items)
+        total += dump_russian_dialogues(dst("russian_dialogues", "russian_dialogues_chat.txt"), args.max_items)
     print(f"total written: {total / 1e6:.1f} MB across new files")
 
 

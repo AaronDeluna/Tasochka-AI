@@ -13,13 +13,13 @@ What was removed (was cheating on eval):
   * Arithmetic table — gsm8k_chat.txt teaches step-by-step reasoning instead.
   * Creative shorts (jokes, recipes) — saiga / grandmaster have plenty.
 
-Output: russian-train-dataset/persona_seed.txt
+Output: datasets/ru/persona/persona_seed.txt
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "russian-train-dataset" / "persona_seed.txt"
+OUT = Path(__file__).resolve().parent.parent / "datasets" / "ru" / "persona" / "persona_seed.txt"
 NAME = "Тасочка"
 
 

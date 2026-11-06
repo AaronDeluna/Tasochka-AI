@@ -7,7 +7,8 @@ model is doing template lookup. Answers that look related but differently
 worded mean the model actually learned something.
 
 Usage:
-    python -m tasochka.eval > eval_output.txt 2>&1
+    python -m tasochka.eval --checkpoint checkpoints/mac-1h > eval_output.txt 2>&1
+    python -m tasochka.eval --lang ru --checkpoint checkpoints/<ru-run>
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ from .generate import CHAT_STOPS, build_chat_prompt, generate_stream, load
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parent.parent / "checkpoints" / "tasochka"
 
 # (category, label, prompt) — none of these phrasings or facts are in seed files.
-PROMPTS = [
+PROMPTS_RU = [
     # ── CHAT (greetings/openers NOT in seed) ──────────────────────
     ("CHAT",      "greet slang",                 "Здравствуй!"),
     ("CHAT",      "greet informal",              "Йоу, ты тут?"),
@@ -89,9 +90,68 @@ PROMPTS = [
 ]
 
 
+# English set for the general-assistant run (datasets/en). Same categories,
+# so runs in both languages can be compared side by side.
+PROMPTS_EN = [
+    ("CHAT",      "greet",               "Hi there!"),
+    ("CHAT",      "small-talk",          "It's raining all day and I'm bored."),
+    ("IDENTITY",  "who are you",         "Who are you?"),
+    ("IDENTITY",  "one sentence",        "Describe yourself in one sentence."),
+    ("FACT",      "capital france",      "What is the capital of France?"),
+    ("FACT",      "capital japan",       "What is the capital of Japan?"),
+    ("FACT",      "photosynthesis",      "What is photosynthesis?"),
+    ("FACT",      "water boiling",       "At what temperature does water boil?"),
+    ("FACT",      "shakespeare",         "Who wrote Romeo and Juliet?"),
+    ("FACT",      "gravity",             "Explain gravity to a ten-year-old."),
+    ("REASONING", "add",                 "What is 23 + 47?"),
+    ("REASONING", "money",               "Tom had $100 and spent $37. How much does he have left?"),
+    ("REASONING", "day-of-week",         "If today is Wednesday, what day will it be in 5 days?"),
+    ("INSTR",     "five fruits",         "List five fruits."),
+    ("INSTR",     "email",               "Write a short email asking my manager for a day off."),
+    ("INSTR",     "summarize",           "Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone."),
+    ("CODE",      "python reverse",      "Write a Python function that reverses a string."),
+    ("CREATIVE",  "haiku",               "Write a haiku about autumn."),
+    ("CREATIVE",  "cafe name",           "Suggest a name for a cozy coffee shop."),
+    ("EMOTION",   "nervous",             "I'm really nervous about my job interview tomorrow."),
+    ("EDGE",      "unknown person",      "Who is Bartholomew Quigglesworth from Tulsa?"),
+    ("EDGE",      "impossible",          "When did humans first land on Jupiter?"),
+    ("CONTEXT",   "remember name",       "My name is Alex. What is my name?"),
+    ("CHAT",      "how are you",         "How are you doing today?"),
+    ("CHAT",      "weekend plans",       "Any ideas for what to do this weekend?"),
+    ("IDENTITY",  "can you think",       "Can you think like a human?"),
+    ("FACT",      "largest planet",      "What is the largest planet in our solar system?"),
+    ("FACT",      "dna",                 "What is DNA?"),
+    ("FACT",      "ww2 end",             "When did World War II end?"),
+    ("FACT",      "speed of light",      "How fast does light travel?"),
+    ("FACT",      "volcano",             "How do volcanoes form?"),
+    ("FACT",      "mona lisa",           "Who painted the Mona Lisa?"),
+    ("FACT",      "heart",               "What does the human heart do?"),
+    ("FACT",      "inflation",           "What is inflation in economics?"),
+    ("FACT",      "seasons",             "Why does Earth have seasons?"),
+    ("REASONING", "multiply",            "What is 12 times 8?"),
+    ("REASONING", "apples",              "I have 3 apples and buy 5 more, then eat 2. How many apples do I have?"),
+    ("REASONING", "train speed",         "A train travels 60 miles in 1 hour. How far will it go in 3 hours?"),
+    ("REASONING", "older",               "Anna is older than Ben. Ben is older than Carl. Who is the youngest?"),
+    ("INSTR",     "three tips sleep",    "Give me three tips for better sleep."),
+    ("INSTR",     "explain simply",      "Explain what a computer is in simple words."),
+    ("INSTR",     "rewrite formal",      "Rewrite this more formally: hey, can u send me the report asap?"),
+    ("INSTR",     "pros cons",           "What are the pros and cons of working from home?"),
+    ("INSTR",     "recipe",              "How do I make a simple omelette?"),
+    ("CODE",      "python sum",          "Write a Python function that returns the sum of a list of numbers."),
+    ("CODE",      "what is api",         "What is an API in programming?"),
+    ("CREATIVE",  "short story",         "Write a two-sentence story about a lost dog."),
+    ("CREATIVE",  "slogan",              "Create a slogan for a bicycle shop."),
+    ("EMOTION",   "sad",                 "I feel sad today. Can you cheer me up?"),
+    ("EDGE",      "future",              "What will the weather be like on March 3, 2091?"),
+]
+
+PROMPTS = {"en": PROMPTS_EN, "ru": PROMPTS_RU}
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    parser.add_argument("--lang", choices=sorted(PROMPTS), default="en")
     parser.add_argument("--max-new", type=int, default=180)
     parser.add_argument("--temperature", type=float, default=0.8)
     parser.add_argument("--top-k", type=int, default=50)
@@ -106,7 +166,8 @@ def main() -> None:
     args = parse_args()
     np.random.seed(args.seed)
     model, tokenizer, cfg = load(args.checkpoint)
-    print(f"# Tasochka AI honest evaluation ({len(PROMPTS)} prompts, none verbatim in seed)")
+    prompts = PROMPTS[args.lang]
+    print(f"# Tasochka AI honest evaluation ({len(prompts)} {args.lang} prompts, none verbatim in training seeds)")
     print(f"# checkpoint: {args.checkpoint}")
     print(f"# vocab={tokenizer.vocab_size} ctx={cfg.context_length} "
           f"layers={cfg.num_layers} dim={cfg.embedding_dim}")
@@ -115,9 +176,9 @@ def main() -> None:
           f"seed={args.seed} max_new={args.max_new}")
     print()
 
-    for i, (category, label, prompt) in enumerate(PROMPTS, 1):
+    for i, (category, label, prompt) in enumerate(prompts, 1):
         print(f"=========================================================")
-        print(f"[{i:02d}/{len(PROMPTS)}] {category:<10} | {label}")
+        print(f"[{i:02d}/{len(prompts)}] {category:<10} | {label}")
         print(f"USER: {prompt}")
         print(f"---------------------------------------------------------")
         full_prompt = build_chat_prompt(prompt)

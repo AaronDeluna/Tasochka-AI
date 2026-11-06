@@ -52,6 +52,26 @@ class BPETokenizer:
         ids = self.tok.encode(s).ids
         return np.array(ids, dtype=np.int32)
 
+    def encode_parallel(self, s: str, pieces: int = 64) -> np.ndarray:
+        """Same ids as `encode` (up to boundary effects), using all CPU cores.
+
+        `encode` is single-threaded (~3.5 MB/s); `encode_batch` runs in Rust
+        threads. The text is split at blank lines — document/paragraph
+        boundaries — so pieces tokenize the same way they would in one string.
+        """
+        step = max(1, len(s) // pieces)
+        parts: List[str] = []
+        start = 0
+        while start < len(s):
+            cut = s.find("\n\n", start + step)
+            end = len(s) if cut == -1 else cut + 2
+            parts.append(s[start:end])
+            start = end
+        if not parts:
+            return np.zeros(0, dtype=np.int32)
+        encoded = self.tok.encode_batch(parts)
+        return np.concatenate([np.asarray(e.ids, dtype=np.int32) for e in encoded])
+
     def decode(self, ids: Iterable[int]) -> str:
         return self.tok.decode([int(i) for i in ids])
 

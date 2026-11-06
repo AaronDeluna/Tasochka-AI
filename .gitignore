@@ -7,15 +7,16 @@ __pycache__/
 .venv/
 
 # Большие данные и веса — не для git
-russian-train-dataset/
-dataset-backup/
+datasets/
 checkpoints/
-finetune/base_model/
-finetune/base_model_4bit/
-finetune/adapters/
-finetune/adapters_qlora/
-finetune/tasochka_gemma/
-finetune/eval_runs/
 *.safetensors
 corpus_ids.bin
 corpus_ids.meta
+
+# Артефакты запусков
+eval_output*.txt
+eval_step*.txt
+morning_report.md
+tech_questions.txt
+*.log
+.tmp-*

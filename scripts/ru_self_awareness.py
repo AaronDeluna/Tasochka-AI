@@ -9,7 +9,7 @@ The goal is generalization: many phrasings of the same idea, so the model
 learns the *concept* of being an AI assistant called Тасочка, not just
 a fixed string lookup.
 
-Output: russian-train-dataset/self_awareness.txt
+Output: datasets/ru/persona/self_awareness.txt
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import itertools
 import random
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "russian-train-dataset" / "self_awareness.txt"
+OUT = Path(__file__).resolve().parent.parent / "datasets" / "ru" / "persona" / "self_awareness.txt"
 NAME = "Тасочка"
 
 

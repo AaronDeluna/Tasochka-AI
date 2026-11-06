@@ -17,179 +17,116 @@ import numpy as np
 
 from .tokenizer import BPETokenizer
 
-# Keep these characters explicitly; otherwise everything in the allowed unicode
-# categories is kept and control codes / weird symbols are dropped.
-EXTRA_ALLOWED = set(" \n.,!?;:-—–…\"'«»()[]{}<>/+*=%&@#№$")
-
-
-_WS_RE = re.compile(r"[ \t]+")
-_DOUBLE_SPACE_RE = re.compile(r" {2,}")
+# Fast path: plain ASCII, Latin-1/Latin Extended, Cyrillic and common
+# typographic punctuation (dashes, curly quotes, ellipsis) are always kept.
+# Anything else goes through a unicode-category check in `_filter_rare`.
+_RARE_RE = re.compile(r"[^\n\x20-\x7e\u00a1-\u024f\u0400-\u04ff\u2010-\u2027\u2030-\u205e]")
+_INNER_SPACES_RE = re.compile(r"(?<=\S) {2,}")
+_TRAILING_SPACES_RE = re.compile(r" +\n")
 _TRIPLE_NL_RE = re.compile(r"\n{3,}")
 
 
-def is_allowed(ch: str) -> bool:
-    if ch in EXTRA_ALLOWED:
-        return True
+def _filter_rare(match: re.Match) -> str:
+    ch = match.group()
+    if ch == "\t":
+        return "    "
     cat = unicodedata.category(ch)
-    # Letters (any script), digits
-    if cat[0] in ("L", "N"):
-        return True
-    return False
+    if cat == "Zs":  # nbsp, thin space, ...
+        return " "
+    # Letters/digits/marks of any script, punctuation, math/currency/modifier
+    # symbols. Dropped: control/format chars, emoji and other "So" symbols.
+    if cat[0] in "LNMP" or cat in ("Sm", "Sc", "Sk"):
+        return ch
+    return ""
 
 
 def clean(text: str) -> str:
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = _WS_RE.sub(" ", text)
-    out = []
-    for ch in text:
-        if is_allowed(ch):
-            out.append(ch)
-    cleaned = "".join(out)
-    cleaned = _DOUBLE_SPACE_RE.sub(" ", cleaned)
-    cleaned = _TRIPLE_NL_RE.sub("\n\n", cleaned)
-    return cleaned
+    """Normalise whitespace and drop junk characters.
 
-
-def stream_jsonl_conversations(path: Path, max_chars: int, field: str = "conversation") -> str:
-    """Read JSONL, extract `field` from each line, accumulate up to max_chars."""
-    chunks: list[str] = []
-    total = 0
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            if total >= max_chars:
-                break
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            value = obj.get(field)
-            if not isinstance(value, str):
-                continue
-            chunks.append(value)
-            chunks.append("\n")
-            total += len(value) + 1
-    raw = "".join(chunks)
-    if len(raw) > max_chars:
-        raw = raw[:max_chars]
-    return raw
-
-
-def stream_text_file(path: Path, max_chars: int) -> str:
-    """Read a plain UTF-8 text file, accumulating up to max_chars."""
-    chunks: list[str] = []
-    total = 0
-    with path.open("r", encoding="utf-8", errors="replace") as f:
-        while total < max_chars:
-            chunk = f.read(min(1024 * 1024, max_chars - total))
-            if not chunk:
-                break
-            chunks.append(chunk)
-            total += len(chunk)
-    return "".join(chunks)
-
-
-def stream_text_directory(path: Path, max_chars: int, chunk_bytes: int = 256 * 1024) -> str:
-    """Read all .txt files in a directory and interleave their chunks.
-
-    Instead of concatenating files end-to-end (which would put each source in a
-    contiguous block and break train/val distribution matching), we read a
-    small chunk from each file in round-robin until the char budget is hit.
-    Result: every region of the corpus contains a mix of all sources, so the
-    last 2% used for validation has the same distribution as training.
+    Leading indentation is preserved (code in chat data stays valid Python);
+    only runs of spaces *inside* a line are collapsed.
     """
-    files = sorted(path.glob("*.txt"))
-    if not files:
-        return ""
-    per_file_budget = max_chars // len(files) + max_chars  # generous upper bound
-    handles = [fp.open("r", encoding="utf-8", errors="replace") for fp in files]
-    chunks: list[str] = []
-    total = 0
-    try:
-        active = list(range(len(handles)))
-        while active and total < max_chars:
-            still_active: list[int] = []
-            for i in active:
-                if total >= max_chars:
-                    break
-                want = min(chunk_bytes, max_chars - total)
-                piece = handles[i].read(want)
-                if not piece:
-                    continue
-                # ensure we don't cut mid-line at the boundary
-                if len(piece) == want:
-                    tail = handles[i].readline()
-                    piece += tail
-                chunks.append(piece)
-                if not piece.endswith("\n"):
-                    chunks.append("\n")
-                    total += 1
-                total += len(piece)
-                still_active.append(i)
-            active = still_active
-    finally:
-        for h in handles:
-            h.close()
-    return "".join(chunks)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = _RARE_RE.sub(_filter_rare, text)
+    text = _INNER_SPACES_RE.sub(" ", text)
+    text = _TRAILING_SPACES_RE.sub("\n", text)
+    return _TRIPLE_NL_RE.sub("\n\n", text)
 
 
 def corpus_signature(path: Path) -> str:
     if path.is_dir():
         parts = []
-        for file_path in sorted(path.glob("*.txt")):
+        for file_path in sorted(path.rglob("*.txt")):
             stat = file_path.stat()
-            parts.append(f"{file_path.name}:{stat.st_size}:{stat.st_mtime_ns}")
+            rel = file_path.relative_to(path).as_posix()
+            parts.append(f"{rel}:{stat.st_size}:{stat.st_mtime_ns}")
         return f"txtdir:{path.resolve()}|" + "|".join(parts)
     stat = path.stat()
     return f"file:{path.resolve()}:{stat.st_size}:{stat.st_mtime_ns}"
 
 
-@dataclass
-class CleanedCorpus:
-    text: str
-    raw_chars: int
-    cleaned_chars: int
-    removed: int
-    signature: str
+def _read_until_blank_line(handle, size: int) -> str:
+    """Read ~`size` chars, then extend to the next blank line.
+
+    Documents and chat blocks are separated by blank lines, so cutting there
+    (instead of mid-paragraph) keeps text from another source from being
+    spliced into the middle of a document.
+    """
+    piece = handle.read(size)
+    if len(piece) < size or piece.endswith("\n\n"):
+        return piece
+    tail = [handle.readline()]
+    while tail[-1] and tail[-1] != "\n":
+        tail.append(handle.readline())
+    return piece + "".join(tail)
+
+
+def _estimate_chars(path: Path, sample_bytes: int = 4_000_000) -> int:
+    """Character count of a UTF-8 file, estimated from its first few MB."""
+    size = path.stat().st_size
+    if size <= 0:
+        return 0
+    with path.open("rb") as f:
+        head = f.read(sample_bytes)
+    chars = len(head.decode("utf-8", errors="ignore"))
+    return int(size * chars / max(1, len(head)))
 
 
 def iter_cleaned_chunks(path: Path, max_chars: int,
                         chunk_size: int = 8_000_000) -> Iterator[str]:
     """Stream cleaned text chunks from a file or directory.
 
-    For a directory of .txt files, files are read in round-robin so every
-    region of the stream contains a mix of all sources. Holds at most one
-    chunk in memory at a time — safe for arbitrarily large corpora.
+    For a directory of .txt files, files are interleaved in proportion to their
+    size: each round reads `chunk_size` chars from the largest file and a
+    proportionally smaller piece from every other one, so all sources run out
+    at the same time and every region of the stream (including the last 2%
+    used for validation) has the same mix as the corpus as a whole. To give a
+    source more weight, make its file bigger — nothing is repeated implicitly.
+    Holds at most one chunk in memory at a time — safe for arbitrarily large
+    corpora.
     """
     if path.is_dir():
-        files = sorted(path.glob("*.txt"))
+        files = sorted(path.rglob("*.txt"))
         if not files:
             return
-        # Files smaller than this threshold get looped on EOF so they show up
-        # throughout the whole training stream, not just at the start.
-        loop_threshold = 100 * 1024 * 1024  # 100 MB
-        file_sizes = [fp.stat().st_size for fp in files]
-        loop_file = [size < loop_threshold for size in file_sizes]
+        # Quotas are read in characters, so weigh files by characters too:
+        # Cyrillic is 2 bytes per char in UTF-8, and byte sizes would make a
+        # Russian file run out halfway through an English one.
+        file_sizes = [_estimate_chars(fp) for fp in files]
+        largest = max(1, max(file_sizes))
+        quotas = [max(4096, chunk_size * size // largest) for size in file_sizes]
         handles = [fp.open("r", encoding="utf-8", errors="replace") for fp in files]
         try:
             total = 0
-            active = list(range(len(handles)))
+            active = [i for i, size in enumerate(file_sizes) if size > 0]
             while active and total < max_chars:
                 still_active: list[int] = []
                 for i in active:
                     if total >= max_chars:
                         break
-                    piece = handles[i].read(chunk_size)
+                    piece = _read_until_blank_line(handles[i], quotas[i])
                     if not piece:
-                        if loop_file[i]:
-                            handles[i].seek(0)
-                            piece = handles[i].read(chunk_size)
-                        if not piece:
-                            continue
-                    if len(piece) == chunk_size:
-                        piece += handles[i].readline()
+                        continue
                     cleaned = clean(piece)
                     if cleaned:
                         if not cleaned.endswith("\n"):
@@ -197,12 +134,6 @@ def iter_cleaned_chunks(path: Path, max_chars: int,
                         yield cleaned
                         total += len(cleaned)
                     still_active.append(i)
-                # If the only remaining handles are small looping files,
-                # we've already traversed all large sources — stop instead
-                # of over-weighting the small files indefinitely.
-                if not any(not loop_file[j] for j in still_active):
-                    active = []
-                    break
                 active = still_active
         finally:
             for h in handles:
@@ -258,18 +189,32 @@ def iter_cleaned_chunks(path: Path, max_chars: int,
                 total += len(cleaned)
 
 
+def token_storage_dtype(vocab_size: int) -> np.dtype:
+    """Smallest integer type that can hold every token id.
+
+    A vocab below 65536 fits in uint16, which halves corpus_ids.bin on disk and
+    halves the bytes read per batch — on a 16 GB Mac that is the difference
+    between the corpus living in the page cache and thrashing the SSD.
+    """
+    return np.dtype(np.uint16 if vocab_size <= np.iinfo(np.uint16).max else np.int32)
+
+
 def encode_corpus_to_file(
     path: Path,
     tokenizer: BPETokenizer,
     max_chars: int,
     output_path: Path,
     progress_every_chars: int = 100_000_000,
+    dtype: np.dtype | None = None,
 ) -> tuple[int, int]:
-    """Encode corpus to a binary int32 file on disk, returning (cleaned_chars, total_tokens).
+    """Encode corpus to a binary file on disk, returning (cleaned_chars, total_tokens).
 
-    The output file is meant to be read back via numpy memmap, so the encoded
-    corpus never needs to fit fully in RAM.
+    Token ids are stored as `dtype` (uint16 when the vocab allows). The output
+    is meant to be read back via numpy memmap, so the encoded corpus never
+    needs to fit fully in RAM.
     """
+    if dtype is None:
+        dtype = token_storage_dtype(tokenizer.vocab_size)
     import time
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
@@ -279,8 +224,8 @@ def encode_corpus_to_file(
     last_report_chars = 0
     with tmp_path.open("wb") as f:
         for chunk in iter_cleaned_chunks(path, max_chars):
-            ids = tokenizer.encode(chunk)
-            f.write(ids.tobytes())
+            ids = tokenizer.encode_parallel(chunk)
+            f.write(ids.astype(dtype, copy=False).tobytes())
             total_tokens += int(len(ids))
             total_chars += len(chunk)
             if total_chars - last_report_chars >= progress_every_chars:
@@ -294,42 +239,34 @@ def encode_corpus_to_file(
     return total_chars, total_tokens
 
 
-def load_corpus(path: Path, max_chars: int) -> CleanedCorpus:
-    if path.is_dir():
-        raw = stream_text_directory(path, max_chars)
-    elif path.suffix.lower() == ".txt":
-        raw = stream_text_file(path, max_chars * 2)
-    else:
-        raw = stream_jsonl_conversations(path, max_chars * 2)
-    cleaned = clean(raw)
-    if len(cleaned) > max_chars:
-        cleaned = cleaned[:max_chars]
-    return CleanedCorpus(
-        text=cleaned,
-        raw_chars=len(raw),
-        cleaned_chars=len(cleaned),
-        removed=len(raw) - len(cleaned),
-        signature=corpus_signature(path),
-    )
-
-
 @dataclass
 class TokenDataset:
     ids: np.ndarray
     rng: np.random.Generator
+    seed: int = 0
 
     @classmethod
     def from_text(cls, text: str, tokenizer: BPETokenizer, seed: int) -> "TokenDataset":
         ids = tokenizer.encode(text)
         if len(ids) < 2:
             raise ValueError("Dataset must contain at least two tokens")
-        return cls(ids=ids, rng=np.random.default_rng(seed))
+        return cls(ids=ids, rng=np.random.default_rng(seed), seed=seed)
 
     @classmethod
     def from_ids(cls, ids: np.ndarray, seed: int) -> "TokenDataset":
         if len(ids) < 2:
             raise ValueError("Dataset must contain at least two tokens")
-        return cls(ids=ids, rng=np.random.default_rng(seed))
+        return cls(ids=ids, rng=np.random.default_rng(seed), seed=seed)
+
+    def reset_rng(self) -> None:
+        """Restart the sampling stream from the original seed.
+
+        Called before every validation pass so each evaluation scores the model
+        on the *same* windows. Otherwise the RNG keeps advancing and every
+        val loss is measured on different data — the number jumps around and
+        "best checkpoint" selection turns into a coin flip.
+        """
+        self.rng = np.random.default_rng(self.seed)
 
     def next_batch(self, batch_size: int, ctx: int) -> tuple[np.ndarray, np.ndarray]:
         if len(self.ids) <= ctx + 1:

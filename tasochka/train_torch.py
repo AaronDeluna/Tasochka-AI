@@ -20,18 +20,22 @@ from .data import (
     encode_corpus_to_file,
     iter_cleaned_chunks,
     split_train_val_ids,
+    token_storage_dtype,
 )
 from .model_torch import (
     MiniGPT,
     ModelConfig,
+    init_weights,
     load_checkpoint,
     param_count,
     pick_device,
     save_checkpoint,
 )
+from .checkpoint_io import atomic_write, atomic_write_text, interrupt_on_termination, save_snapshot
+from .config import parse_args_with_config
 from .tokenizer import BPETokenizer
 
-DEFAULT_DATA = Path(__file__).resolve().parent.parent / "russian-train-dataset"
+DEFAULT_DATA = Path(__file__).resolve().parent.parent / "datasets" / "en"
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parent.parent / "checkpoints" / "tasochka"
 
 
@@ -41,21 +45,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     parser.add_argument("--max-steps", type=int, default=10000)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--grad-accum", type=int, default=1,
+                       help="Gradient accumulation: effective batch = batch-size * grad-accum.")
+    parser.add_argument("--grad-checkpoint", action="store_true",
+                       help="Recompute activations in backward: ~30%% медленнее, "
+                            "но резко меньше памяти (нужно для 1B на 24 GB).")
     parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--weight-decay", type=float, default=0.01)
+    parser.add_argument("--weight-decay", type=float, default=0.1)
     parser.add_argument("--max-dataset-chars", type=int, default=30_000_000)
-    parser.add_argument("--vocab-size", type=int, default=8000)
+    parser.add_argument("--vocab-size", type=int, default=32000,
+                       help="Размер BPE-словаря. Для русского 8000 мало: 32k даёт "
+                            "4.56 симв/токен против 3.69 -> на 19%% меньше токенов "
+                            "на тот же текст. Для маленькой модели (dim<=896) бери 16000.")
     parser.add_argument("--val-fraction", type=float, default=0.02)
     parser.add_argument("--val-every", type=int, default=200)
     parser.add_argument("--val-batches", type=int, default=8)
     parser.add_argument("--log-every", type=int, default=20)
     parser.add_argument("--checkpoint-every", type=int, default=500)
+    parser.add_argument("--snapshot-every", type=int, default=0,
+                       help="Каждые N шагов копировать веса в <checkpoint>/snapshots/step_N/ "
+                            "для отката (0 = выкл). Должно быть кратно --checkpoint-every.")
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--context-length", type=int, default=256)
     parser.add_argument("--embedding-dim", type=int, default=896)
     parser.add_argument("--num-layers", type=int, default=20)
     parser.add_argument("--num-heads", type=int, default=14)
+    parser.add_argument("--num-kv-heads", type=int, default=0,
+                       help="GQA: KV-голов меньше, чем Q-голов (0 = столько же, обычный MHA).")
     parser.add_argument("--feed-forward-dim", type=int, default=2400)
+    parser.add_argument("--tie-embeddings", action="store_true",
+                       help="LM-голова использует матрицу эмбеддингов (экономит vocab*dim параметров).")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--warmup-steps", type=int, default=100)
     parser.add_argument("--min-lr-ratio", type=float, default=0.1,
@@ -68,7 +87,7 @@ def parse_args() -> argparse.Namespace:
                        help="Disable bf16 even on CUDA.")
     parser.add_argument("--compile", action="store_true",
                        help="torch.compile the model (CUDA, may take 1-2 min to warm up).")
-    return parser.parse_args()
+    return parse_args_with_config(parser)
 
 
 def format_duration(seconds: float) -> str:
@@ -112,27 +131,35 @@ def get_or_encode_ids(data_path: Path, tokenizer: BPETokenizer, checkpoint_dir: 
                      max_chars: int, source_signature: str) -> np.memmap:
     ids_path = checkpoint_dir / "corpus_ids.bin"
     meta_path = checkpoint_dir / "corpus_ids.meta"
-    meta_value = f"{max_chars}:{tokenizer.vocab_size}:{source_signature}"
+    dtype = token_storage_dtype(tokenizer.vocab_size)
+    # "v3" (v3 = new cleaning + proportional mixing) + dtype in the signature: an
+    # older cache must not be reused, and an int32 cache must not be reinterpreted
+    # as uint16, which would silently feed the model garbage token ids.
+    meta_value = f"v3:{dtype.name}:{max_chars}:{tokenizer.vocab_size}:{source_signature}"
     if ids_path.exists() and meta_path.exists():
         meta = meta_path.read_text(encoding="utf-8").strip()
         if meta == meta_value:
-            n_tokens = ids_path.stat().st_size // 4
+            n_tokens = ids_path.stat().st_size // dtype.itemsize
             print(f"loading cached token ids from {ids_path} ({n_tokens / 1e6:.1f}M tokens)")
-            return np.memmap(ids_path, dtype=np.int32, mode="r", shape=(n_tokens,))
-    print(f"encoding corpus (streaming, max {max_chars / 1e6:.0f} MB)...")
+            return np.memmap(ids_path, dtype=dtype, mode="r", shape=(n_tokens,))
+    print(f"encoding corpus (streaming, max {max_chars / 1e6:.0f} MB, {dtype.name})...")
     start = time.time()
     cleaned_chars, n_tokens = encode_corpus_to_file(
-        data_path, tokenizer, max_chars, ids_path
+        data_path, tokenizer, max_chars, ids_path, dtype=dtype
     )
     meta_path.write_text(meta_value, encoding="utf-8")
     print(f"encoded in {format_duration(time.time() - start)}: "
           f"{cleaned_chars / 1e6:.1f}M cleaned chars → {n_tokens / 1e6:.1f}M tokens "
-          f"(compression {cleaned_chars / max(1, n_tokens):.2f} chars/token)")
-    return np.memmap(ids_path, dtype=np.int32, mode="r", shape=(n_tokens,))
+          f"(compression {cleaned_chars / max(1, n_tokens):.2f} chars/token, "
+          f"{n_tokens * dtype.itemsize / 1e9:.2f} GB on disk)")
+    return np.memmap(ids_path, dtype=dtype, mode="r", shape=(n_tokens,))
 
 
 def evaluate(model: MiniGPT, dataset: TokenDataset, batch_size: int, ctx: int,
              batches: int, device: torch.device) -> float:
+    # Same windows every time — otherwise val loss is measured on different
+    # data at each call and can't be compared across steps.
+    dataset.reset_rng()
     model.eval()
     total = 0.0
     n = 0
@@ -179,13 +206,24 @@ def main() -> None:
             embedding_dim=args.embedding_dim,
             num_layers=args.num_layers,
             num_heads=args.num_heads,
+            num_kv_heads=args.num_kv_heads,
             feed_forward_dim=args.feed_forward_dim,
+            tie_embeddings=args.tie_embeddings,
         )
-        model = MiniGPT(cfg).to(device)
+        model = MiniGPT(cfg)
+        init_weights(model, cfg)
+        model = model.to(device)
+
+    model.grad_checkpoint = args.grad_checkpoint
+    if args.grad_checkpoint:
+        print("gradient checkpointing ON (меньше памяти, ~30% медленнее)")
 
     if args.compile and device.type == "cuda":
         print("torch.compile() — first step will be slow (graph compilation)")
-        model = torch.compile(model)
+        # Compile the method the training loop actually calls. Wrapping the
+        # module instead (`model = torch.compile(model)`) would leave `.loss()`
+        # running eagerly — and prefix every state_dict key with "_orig_mod.".
+        model.loss = torch.compile(model.loss)
 
     n_params = param_count(model)
     print(f"vocab={tokenizer.vocab_size} params={n_params:,} "
@@ -196,7 +234,50 @@ def main() -> None:
     val_set = TokenDataset.from_ids(val_ids, args.seed + 1)
     print(f"train tokens={len(train_ids):,} val tokens={len(val_ids):,}")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    # LLM-standard AdamW: betas (0.9, 0.95); weight decay only on matrices,
+    # not on norms/embeddings/biases (GPT-3/LLaMA/DeepSeek practice).
+    decay_params = [p for p in model.parameters() if p.requires_grad and p.dim() >= 2]
+    nodecay_params = [p for p in model.parameters() if p.requires_grad and p.dim() < 2]
+    optimizer = torch.optim.AdamW(
+        [
+            {"params": decay_params, "weight_decay": args.weight_decay},
+            {"params": nodecay_params, "weight_decay": 0.0},
+        ],
+        lr=args.lr,
+        betas=(0.9, 0.95),
+        fused=(device.type == "cuda"),
+    )
+
+    # Resume optimizer state + step for exact continuation.
+    start_step = 0
+    best_val = float("inf")
+    opt_path = args.checkpoint / "optimizer.pt"
+    state_path = args.checkpoint / "train_state.json"
+    if state_path.exists():
+        import json as _json
+        meta = _json.loads(state_path.read_text(encoding="utf-8"))
+        start_step = int(meta.get("step", 0))
+        best_val = float(meta.get("best_val", float("inf")))
+        if opt_path.exists():
+            try:
+                optimizer.load_state_dict(torch.load(opt_path, map_location=device))
+                print(f"restored optimizer state at step {start_step}")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[warn] optimizer state mismatch ({exc}); fresh optimizer")
+    if start_step >= args.max_steps:
+        print(f"checkpoint already at step {start_step} >= max-steps {args.max_steps}")
+        return
+
+    def save_train_state(step: int) -> None:
+        import json as _json
+        atomic_write(opt_path, lambda path: torch.save(optimizer.state_dict(), path))
+        atomic_write_text(state_path, _json.dumps({"step": step, "best_val": best_val}))
+
+    def save_all(step: int) -> None:
+        # Weights first, then the step counter: if we die in between, resume
+        # restarts from the older step with newer weights — harmless.
+        save_checkpoint(args.checkpoint, model, cfg)
+        save_train_state(step)
 
     # Sanity probe
     x0, y0 = train_set.next_batch(args.batch_size, cfg.context_length)
@@ -206,58 +287,85 @@ def main() -> None:
 
     started = time.time()
     last_log = started
-    last_log_step = 0
-    recent_loss = 0.0
+    last_log_step = start_step
+    # Running loss stays on-device: .item() forces a GPU sync and stalls the
+    # pipeline, so we only pay it on logging steps.
+    loss_sum = torch.zeros((), device=device, dtype=torch.float32)
     recent_count = 0
 
     amp_dtype = torch.bfloat16 if use_bf16 else torch.float32
     amp_ctx = torch.amp.autocast(device_type=device.type, dtype=amp_dtype) if use_bf16 else _NullCtx()
 
-    for step in range(1, args.max_steps + 1):
-        x_np, y_np = train_set.next_batch(args.batch_size, cfg.context_length)
-        x = torch.from_numpy(x_np).to(device, non_blocking=True)
-        y = torch.from_numpy(y_np).to(device, non_blocking=True)
+    interrupt_on_termination()
+    done_step = start_step
+    try:
+        for step in range(start_step + 1, args.max_steps + 1):
+            lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
+            for pg in optimizer.param_groups:
+                pg["lr"] = lr
 
-        lr = lr_schedule(step, args.max_steps, args.warmup_steps, args.lr, args.min_lr_ratio)
-        for pg in optimizer.param_groups:
-            pg["lr"] = lr
+            # Gradient accumulation: run `grad_accum` micro-batches, dividing each
+            # loss so the accumulated gradient equals the mean over the full
+            # effective batch (batch_size * grad_accum) before a single step.
+            optimizer.zero_grad(set_to_none=True)
+            step_loss = torch.zeros((), device=device, dtype=torch.float32)
+            for _ in range(args.grad_accum):
+                x_np, y_np = train_set.next_batch(args.batch_size, cfg.context_length)
+                x = torch.from_numpy(x_np).to(device, non_blocking=True)
+                y = torch.from_numpy(y_np).to(device, non_blocking=True)
+                with amp_ctx:
+                    loss = model.loss(x, y) / args.grad_accum
+                loss.backward()
+                step_loss += loss.detach().float()
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+            optimizer.step()
 
-        with amp_ctx:
-            loss = model.loss(x, y)
-        optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-        optimizer.step()
+            loss_sum += step_loss
+            recent_count += 1
 
-        loss_v = loss.item()
-        recent_loss += loss_v
-        recent_count += 1
+            if step == start_step + 1 or step % args.log_every == 0:
+                now = time.time()
+                loss_v = step_loss.item()  # full-step loss, not the last micro-batch
+                avg = loss_sum.item() / max(1, recent_count)
+                ms_per_step = (now - last_log) * 1000.0 / max(1, step - last_log_step)
+                eta = (now - started) / max(1, step - start_step) * (args.max_steps - step)
+                print(
+                    f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
+                    f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(grad_norm):.2f} lr {lr:.2e} "
+                    f"{ms_per_step:.0f} ms/step ETA {format_duration(eta)}"
+                )
+                last_log = now
+                last_log_step = step
+                loss_sum = torch.zeros((), device=device, dtype=torch.float32)
+                recent_count = 0
 
-        if step == 1 or step % args.log_every == 0:
-            now = time.time()
-            avg = recent_loss / max(1, recent_count)
-            ms_per_step = (now - last_log) * 1000.0 / max(1, step - last_log_step)
-            eta = (now - started) / step * (args.max_steps - step)
-            print(
-                f"step {step}/{args.max_steps} ({100.0 * step / args.max_steps:.1f}%) "
-                f"loss {loss_v:.4f} (avg {avg:.4f}) gnorm {float(grad_norm):.2f} lr {lr:.2e} "
-                f"{ms_per_step:.0f} ms/step ETA {format_duration(eta)}"
-            )
-            last_log = now
-            last_log_step = step
-            recent_loss = 0.0
-            recent_count = 0
+            if args.val_every and step % args.val_every == 0:
+                val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length,
+                                   args.val_batches, device)
+                marker = ""
+                if val_loss < best_val:
+                    best_val = val_loss
+                    save_checkpoint(args.checkpoint, model, cfg,
+                                    weights_name="weights_best.safetensors")
+                    marker = " (best → weights_best.safetensors)"
+                print(f"[val] step {step} loss {val_loss:.4f}{marker}")
 
-        if args.val_every and step % args.val_every == 0:
-            val_loss = evaluate(model, val_set, args.batch_size, cfg.context_length,
-                               args.val_batches, device)
-            print(f"[val] step {step} loss {val_loss:.4f}")
+            if args.checkpoint_every and step % args.checkpoint_every == 0:
+                save_all(step)
+                print(f"[checkpoint] step {step} saved to {args.checkpoint}")
+                if args.snapshot_every and step % args.snapshot_every == 0:
+                    print(f"[snapshot] {save_snapshot(args.checkpoint, step)}")
+            done_step = step
+    except KeyboardInterrupt:
+        if done_step > start_step:
+            save_all(done_step)
+            print(f"\n[interrupted] step {done_step} saved to {args.checkpoint}; "
+                  f"rerun the same command to resume")
+        else:
+            print("\n[interrupted] nothing to save yet")
+        return
 
-        if args.checkpoint_every and step % args.checkpoint_every == 0:
-            save_checkpoint(args.checkpoint, model, cfg)
-            print(f"[checkpoint] step {step} saved to {args.checkpoint}")
-
-    save_checkpoint(args.checkpoint, model, cfg)
+    save_all(args.max_steps)
     print(f"saved final model to {args.checkpoint}")
 
 
