@@ -15,3 +15,8 @@ corpus_ids.meta
 
 # Артефакты запусков
 eval_output*.txt
+eval_step*.txt
+morning_report.md
+tech_questions.txt
+*.log
+.tmp-*

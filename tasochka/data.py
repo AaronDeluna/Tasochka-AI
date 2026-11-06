@@ -81,6 +81,17 @@ def _read_until_blank_line(handle, size: int) -> str:
     return piece + "".join(tail)
 
 
+def _estimate_chars(path: Path, sample_bytes: int = 4_000_000) -> int:
+    """Character count of a UTF-8 file, estimated from its first few MB."""
+    size = path.stat().st_size
+    if size <= 0:
+        return 0
+    with path.open("rb") as f:
+        head = f.read(sample_bytes)
+    chars = len(head.decode("utf-8", errors="ignore"))
+    return int(size * chars / max(1, len(head)))
+
+
 def iter_cleaned_chunks(path: Path, max_chars: int,
                         chunk_size: int = 8_000_000) -> Iterator[str]:
     """Stream cleaned text chunks from a file or directory.
@@ -98,7 +109,10 @@ def iter_cleaned_chunks(path: Path, max_chars: int,
         files = sorted(path.rglob("*.txt"))
         if not files:
             return
-        file_sizes = [fp.stat().st_size for fp in files]
+        # Quotas are read in characters, so weigh files by characters too:
+        # Cyrillic is 2 bytes per char in UTF-8, and byte sizes would make a
+        # Russian file run out halfway through an English one.
+        file_sizes = [_estimate_chars(fp) for fp in files]
         largest = max(1, max(file_sizes))
         quotas = [max(4096, chunk_size * size // largest) for size in file_sizes]
         handles = [fp.open("r", encoding="utf-8", errors="replace") for fp in files]

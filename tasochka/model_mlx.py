@@ -68,7 +68,11 @@ class CausalAttention(nn.Module):
         self.wk = nn.Linear(cfg.embedding_dim, kv_dim, bias=False)
         self.wv = nn.Linear(cfg.embedding_dim, kv_dim, bias=False)
         self.wo = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
-        self.rope = nn.RoPE(self.head_dim, traditional=False, base=cfg.rope_theta)
+        # traditional=True rotates adjacent pairs (x0,x1),(x2,x3)... — the same
+        # layout as model_torch._apply_rope. With traditional=False MLX rotates
+        # halves (x_i, x_{i+d/2}) instead, so a checkpoint trained on one backend
+        # would see scrambled positions on the other (loss 2.76 vs 4.57).
+        self.rope = nn.RoPE(self.head_dim, traditional=True, base=cfg.rope_theta)
 
     def __call__(self, x: mx.array) -> mx.array:
         B, T, C = x.shape

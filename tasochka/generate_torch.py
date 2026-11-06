@@ -143,6 +143,7 @@ def generate_stream(
     initial_text = tokenizer.decode(ids)
     yielded_len = len(initial_text)
     generated_text = ""
+    emitted = 0
 
     for _ in range(max_new_tokens):
         context = ids[-cfg.context_length:]
@@ -170,17 +171,39 @@ def generate_stream(
         delta = full_text[yielded_len:safe_end]
         generated_text += delta
 
+        yielded_len = safe_end
         if stop_strings:
             stop_at = _find_earliest_stop(generated_text, stop_strings)
             if stop_at is not None:
-                already = len(generated_text) - len(delta)
-                keep = max(0, stop_at - already)
-                if keep > 0:
-                    yield delta[:keep]
+                if stop_at > emitted:
+                    yield generated_text[emitted:stop_at]
                 return
+            ready = len(generated_text) - _partial_stop_len(generated_text, stop_strings)
+        else:
+            ready = len(generated_text)
+        if ready > emitted:
+            yield generated_text[emitted:ready]
+            emitted = ready
 
-        yield delta
-        yielded_len = safe_end
+    # max_new_tokens hit: whatever is still held back is the start of a stop
+    # string ("</assist"), so drop it rather than print a half tag.
+    if not stop_strings and len(generated_text) > emitted:
+        yield generated_text[emitted:]
+
+def _partial_stop_len(text: str, stops: Sequence[str]) -> int:
+    """Length of the longest suffix of `text` that is a proper prefix of a stop.
+
+    Tokens arrive piecewise ("</", "assistant", ">"), so text that might be the
+    start of a stop string is held back until the next token decides it.
+    """
+    best = 0
+    for stop in stops:
+        for n in range(min(len(stop) - 1, len(text)), best, -1):
+            if text.endswith(stop[:n]):
+                best = n
+                break
+    return best
+
 
 
 def generate(
