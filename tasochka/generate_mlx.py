@@ -6,141 +6,99 @@ Features that matter for a small model:
   - nucleus (top-p) sampling alongside top-k
   - UTF-8-safe streaming (no more `���` characters mid-output)
   - chat-template prompt wrapping with auto-stop at </assistant>
+  - KV cache: the prompt is processed once, then one token per step; the
+    shared loop (sampling, n-grams, decoding, stops) lives in sampling.py
 """
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Iterator, List, Optional, Sequence, Set, Tuple
+from typing import Iterator, List, Optional, Sequence, Tuple
 
 import mlx.core as mx
 import numpy as np
 
-from .model_mlx import MiniGPT, ModelConfig, load_checkpoint
+from .model_mlx import MiniGPT, ModelConfig, load_checkpoint, make_cache
+from .sampling import (  # noqa: F401  (re-exported for callers)
+    CHAT_STOPS,
+    DEFAULT_NO_REPEAT_NGRAM,
+    DEFAULT_REP_PENALTY,
+    DEFAULT_REP_WINDOW,
+    DEFAULT_TEMPERATURE,
+    DEFAULT_TOP_K,
+    DEFAULT_TOP_P,
+    build_chat_prompt,
+    stream_generation,
+)
 from .tokenizer import BPETokenizer
 
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parent.parent / "checkpoints" / "tasochka"
 
-CHAT_STOPS = ["</assistant>", "<user>", "<|endoftext|>", "</s>"]
-
-# Sampling defaults tuned for the trained small model
-DEFAULT_TEMPERATURE = 0.8
-DEFAULT_TOP_K = 50
-DEFAULT_TOP_P = 0.92
-DEFAULT_REP_PENALTY = 1.18
-DEFAULT_NO_REPEAT_NGRAM = 3
-DEFAULT_REP_WINDOW = 128
+# MLX keeps freed GPU buffers in a cache for reuse; without a cap that cache
+# can grow until macOS swaps itself to a halt. 1 GB is plenty for inference.
+MLX_CACHE_LIMIT_BYTES = 1 << 30
 
 
-def build_chat_prompt(user_message: str) -> str:
-    return f"<user>\n{user_message.strip()}\n</user>\n<assistant>\n"
+def _mx_memory_fn(name: str):
+    """mx.<name> on new MLX, mx.metal.<name> on older releases."""
+    for module in (mx, getattr(mx, "metal", None)):
+        fn = getattr(module, name, None) if module is not None else None
+        if fn is not None:
+            return fn
+    return None
+
+
+def limit_mlx_cache(limit_bytes: int = MLX_CACHE_LIMIT_BYTES) -> None:
+    fn = _mx_memory_fn("set_cache_limit")
+    if fn is not None:
+        fn(limit_bytes)
+
+
+def clear_mlx_cache() -> None:
+    fn = _mx_memory_fn("clear_cache")
+    if fn is not None:
+        fn()
 
 
 def load(checkpoint_dir: Path) -> Tuple[MiniGPT, BPETokenizer, ModelConfig]:
+    limit_mlx_cache()
     model, cfg = load_checkpoint(checkpoint_dir)
     tokenizer = BPETokenizer.load(checkpoint_dir / "tokenizer.json")
     model.eval()
     return model, tokenizer, cfg
 
 
-def _banned_ngram_tokens(generated_ids: List[int], ngram_size: int) -> Set[int]:
-    """Tokens that, if generated next, would complete a verbatim n-gram repeat."""
-    if ngram_size <= 0 or len(generated_ids) < ngram_size:
-        return set()
-    prefix = tuple(generated_ids[-(ngram_size - 1):])
-    banned: Set[int] = set()
-    for i in range(len(generated_ids) - ngram_size + 1):
-        ngram = tuple(generated_ids[i:i + ngram_size])
-        if ngram[:-1] == prefix:
-            banned.add(ngram[-1])
-    return banned
+class _CachedStepper:
+    """next-token logits with a KV cache: the prompt is processed in one pass,
+    then each call runs the model on a single new token.
 
-
-def _sample_token(
-    logits: mx.array,
-    temperature: float,
-    top_k: int,
-    top_p: Optional[float],
-    recent_ids: Sequence[int],
-    rep_penalty: float,
-    banned_ids: Optional[Set[int]] = None,
-) -> int:
-    mx.eval(logits)
-    # fp32 cast first: numpy can't read bf16 buffers directly
-    logits_np: np.ndarray = np.array(logits.astype(mx.float32)).astype(np.float64)
-
-    # 1. Repetition penalty: pull recent tokens toward zero
-    if rep_penalty != 1.0 and recent_ids:
-        unique = set(int(t) for t in recent_ids)
-        for tid in unique:
-            if 0 <= tid < len(logits_np):
-                logits_np[tid] = (
-                    logits_np[tid] / rep_penalty
-                    if logits_np[tid] > 0
-                    else logits_np[tid] * rep_penalty
-                )
-
-    # 2. Block tokens that would repeat an n-gram verbatim
-    if banned_ids:
-        for tid in banned_ids:
-            if 0 <= tid < len(logits_np):
-                logits_np[tid] = -1e9
-
-    # 3. Temperature
-    logits_np = logits_np / max(temperature, 1e-6)
-
-    # 4. Top-k
-    if top_k > 0 and top_k < len(logits_np):
-        kth = np.partition(logits_np, -top_k)[-top_k]
-        logits_np = np.where(logits_np >= kth, logits_np, -1e9)
-
-    # 5. Softmax
-    logits_np = logits_np - logits_np.max()
-    probs = np.exp(logits_np)
-    s = probs.sum()
-    if s <= 0 or not np.isfinite(s):
-        # All logits filtered out — fall back to argmax of original
-        return int(np.argmax(np.array(logits)))
-    probs = probs / s
-
-    # 6. Top-p (nucleus)
-    if top_p is not None and 0 < top_p < 1.0:
-        order = np.argsort(probs)[::-1]
-        sorted_probs = probs[order]
-        cumsum = np.cumsum(sorted_probs)
-        cutoff = int(np.searchsorted(cumsum, top_p)) + 1
-        keep_idx = order[:cutoff]
-        new_probs = np.zeros_like(probs)
-        new_probs[keep_idx] = probs[keep_idx]
-        s2 = new_probs.sum()
-        if s2 > 0:
-            probs = new_probs / s2
-
-    return int(np.random.choice(len(probs), p=probs))
-
-
-def _find_earliest_stop(text: str, stops: Sequence[str]) -> Optional[int]:
-    earliest = None
-    for stop in stops:
-        idx = text.find(stop)
-        if idx >= 0 and (earliest is None or idx < earliest):
-            earliest = idx
-    return earliest
-
-def _partial_stop_len(text: str, stops: Sequence[str]) -> int:
-    """Length of the longest suffix of `text` that is a proper prefix of a stop.
-
-    Tokens arrive piecewise ("</", "assistant", ">"), so text that might be the
-    start of a stop string is held back until the next token decides it.
+    When the sequence outgrows the context window, the cache is rebuilt from
+    the last 3/4 of the window (positions restart at 0, as in training); the
+    next rebuild comes only after another 1/4 window of tokens, so the cost of
+    recomputing stays small on long answers.
     """
-    best = 0
-    for stop in stops:
-        for n in range(min(len(stop) - 1, len(text)), best, -1):
-            if text.endswith(stop[:n]):
-                best = n
-                break
-    return best
 
+    def __init__(self, model: MiniGPT, cfg: ModelConfig):
+        self.model = model
+        self.ctx = cfg.context_length
+        self.cache = make_cache(cfg)
+        self.start = 0      # index in ids of the first cached token
+        self.n_cached = 0   # cached tokens; 0 means "prefill next"
+
+    def __call__(self, ids: List[int]) -> np.ndarray:
+        new = ids[self.start + self.n_cached:]
+        if self.n_cached == 0 or self.n_cached + len(new) > self.ctx:
+            keep = self.ctx if self.n_cached == 0 else self.ctx - self.ctx // 4
+            keep = min(len(ids), keep)
+            for layer in self.cache:
+                layer.offset = 0  # reuse the same buffers
+            self.start = len(ids) - keep
+            new = ids[self.start:]
+        x = mx.array(np.array(new, dtype=np.int32).reshape(1, -1))
+        logits = self.model(x, cache=self.cache, last_only=True)
+        self.n_cached = len(ids) - self.start
+        # fp32 cast first: numpy can't read bf16 buffers directly
+        return np.array(logits[0, -1].astype(mx.float32))
 
 
 def generate_stream(
@@ -158,68 +116,16 @@ def generate_stream(
     stop_strings: Optional[Sequence[str]] = None,
 ) -> Iterator[str]:
     """Yield decoded chunks. Holds back trailing U+FFFD until the multi-byte sequence completes."""
-    prompt_ids: List[int] = tokenizer.encode(prompt).tolist() if prompt else []
-    if not prompt_ids:
-        prompt_ids = [0]
-    ids: List[int] = list(prompt_ids)
-    generated_ids: List[int] = []  # tokens produced after the prompt
-
-    initial_text = tokenizer.decode(ids)
-    yielded_len = len(initial_text)
-    generated_text = ""  # only what's been generated, used for stop matching
-    emitted = 0  # how much of generated_text has been yielded
-
-    for _ in range(max_new_tokens):
-        context = ids[-cfg.context_length:]
-        x = mx.array(np.array(context, dtype=np.int32).reshape(1, -1))
-        logits = model(x)
-        last = logits[0, -1]
-
-        recent = generated_ids[-rep_window:] if rep_window > 0 else []
-        banned = _banned_ngram_tokens(generated_ids, no_repeat_ngram) if no_repeat_ngram > 1 else None
-
-        next_id = _sample_token(
-            last,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            recent_ids=recent,
-            rep_penalty=rep_penalty,
-            banned_ids=banned,
+    try:
+        yield from stream_generation(
+            _CachedStepper(model, cfg), tokenizer, prompt,
+            max_new_tokens=max_new_tokens, temperature=temperature, top_k=top_k,
+            top_p=top_p, rep_penalty=rep_penalty, rep_window=rep_window,
+            no_repeat_ngram=no_repeat_ngram, stop_strings=stop_strings,
         )
-        ids.append(next_id)
-        generated_ids.append(next_id)
-
-        # Re-decode full sequence; rightmost incomplete byte shows as U+FFFD —
-        # treat those as "not yet ready" and hold them for the next iteration.
-        full_text = tokenizer.decode(ids)
-        safe_end = len(full_text)
-        while safe_end > yielded_len and full_text[safe_end - 1] == "�":
-            safe_end -= 1
-        if safe_end <= yielded_len:
-            continue
-
-        delta = full_text[yielded_len:safe_end]
-        generated_text += delta
-
-        yielded_len = safe_end
-        if stop_strings:
-            stop_at = _find_earliest_stop(generated_text, stop_strings)
-            if stop_at is not None:
-                if stop_at > emitted:
-                    yield generated_text[emitted:stop_at]
-                return
-            ready = len(generated_text) - _partial_stop_len(generated_text, stop_strings)
-        else:
-            ready = len(generated_text)
-        if ready > emitted:
-            yield generated_text[emitted:ready]
-            emitted = ready
-
-    # max_new_tokens hit: whatever is still held back is the start of a stop
-    # string ("</assist"), so drop it rather than print a half tag.
-    if not stop_strings and len(generated_text) > emitted:
-        yield generated_text[emitted:]
+    finally:
+        # Also runs when the caller stops early (stop string, client gone).
+        clear_mlx_cache()
 
 
 def generate(

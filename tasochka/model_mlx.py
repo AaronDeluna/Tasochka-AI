@@ -23,6 +23,7 @@ import json
 import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import List, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -56,6 +57,39 @@ class ModelConfig:
         return self.embedding_dim // self.num_heads
 
 
+class KVCache:
+    """Keys/values of one attention layer for incremental generation.
+
+    The buffer is allocated once at `max_len` positions and filled in place, so
+    every decode step reuses the same memory. Growing it by concatenation
+    instead would allocate a buffer of a new size on every token, and MLX keeps
+    each of those in its buffer cache — the leak that froze a 16 GB Mac.
+    """
+
+    def __init__(self, max_len: int):
+        self.max_len = max_len
+        self.offset = 0
+        self.keys: Optional[mx.array] = None
+        self.values: Optional[mx.array] = None
+
+    def update(self, k: mx.array, v: mx.array) -> tuple[mx.array, mx.array]:
+        B, H, T, D = k.shape
+        end = self.offset + T
+        if end > self.max_len:
+            raise ValueError(f"KV cache overflow: {end} > {self.max_len} positions")
+        if self.keys is None:
+            self.keys = mx.zeros((B, H, self.max_len, D), dtype=k.dtype)
+            self.values = mx.zeros((B, H, self.max_len, D), dtype=v.dtype)
+        self.keys[:, :, self.offset:end, :] = k
+        self.values[:, :, self.offset:end, :] = v
+        self.offset = end
+        return self.keys[:, :, :end, :], self.values[:, :, :end, :]
+
+
+def make_cache(cfg: "ModelConfig", max_len: Optional[int] = None) -> List[KVCache]:
+    return [KVCache(max_len or cfg.context_length) for _ in range(cfg.num_layers)]
+
+
 class CausalAttention(nn.Module):
     def __init__(self, cfg: ModelConfig):
         super().__init__()
@@ -74,18 +108,29 @@ class CausalAttention(nn.Module):
         # would see scrambled positions on the other (loss 2.76 vs 4.57).
         self.rope = nn.RoPE(self.head_dim, traditional=True, base=cfg.rope_theta)
 
-    def __call__(self, x: mx.array) -> mx.array:
+    def __call__(self, x: mx.array, cache: Optional[KVCache] = None) -> mx.array:
         B, T, C = x.shape
         q = self.wq(x).reshape(B, T, self.n_heads, self.head_dim).transpose(0, 2, 1, 3)
         k = self.wk(x).reshape(B, T, self.n_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
         v = self.wv(x).reshape(B, T, self.n_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
-        q = self.rope(q)
-        k = self.rope(k)
-        # String mask lets Metal use the fused causal kernel (no T*T mask alloc);
-        # GQA (n_kv_heads < n_heads) is handled natively by the kernel.
-        out = mx.fast.scaled_dot_product_attention(
-            q, k, v, scale=self.scale, mask="causal" if T > 1 else None
-        )
+        offset = cache.offset if cache is not None else 0
+        q = self.rope(q, offset=offset)
+        k = self.rope(k, offset=offset)
+        if cache is not None:
+            k, v = cache.update(k, v)
+        if T == 1:
+            mask = None  # a single new token may see every cached position
+        elif offset == 0:
+            # String mask lets Metal use the fused causal kernel (no T*T mask
+            # alloc); GQA (n_kv_heads < n_heads) is handled natively by the kernel.
+            mask = "causal"
+        else:
+            # Several new tokens on top of a filled cache: token i sees all
+            # cached positions plus new tokens up to itself.
+            q_pos = mx.arange(offset, offset + T)[:, None]
+            k_pos = mx.arange(offset + T)[None, :]
+            mask = mx.where(k_pos <= q_pos, 0.0, -mx.inf).astype(q.dtype)
+        out = mx.fast.scaled_dot_product_attention(q, k, v, scale=self.scale, mask=mask)
         out = out.transpose(0, 2, 1, 3).reshape(B, T, C)
         return self.wo(out)
 
@@ -109,8 +154,8 @@ class Block(nn.Module):
         self.norm2 = nn.RMSNorm(cfg.embedding_dim)
         self.ff = SwiGLU(cfg)
 
-    def __call__(self, x: mx.array) -> mx.array:
-        x = x + self.attn(self.norm1(x))
+    def __call__(self, x: mx.array, cache: Optional[KVCache] = None) -> mx.array:
+        x = x + self.attn(self.norm1(x), cache)
         x = x + self.ff(self.norm2(x))
         return x
 
@@ -125,10 +170,17 @@ class MiniGPT(nn.Module):
         if not cfg.tie_embeddings:
             self.head = nn.Linear(cfg.embedding_dim, cfg.vocab_size, bias=False)
 
-    def __call__(self, idx: mx.array) -> mx.array:
+    def __call__(self, idx: mx.array, cache: Optional[List[KVCache]] = None,
+                 last_only: bool = False) -> mx.array:
+        """Logits [B, T, vocab]. With `cache` (one KVCache per layer) only the new
+        tokens in `idx` are processed; `last_only` returns logits for the last
+        position only ([B, 1, vocab]) — generation needs nothing else, and the
+        full [T, vocab] projection is the biggest tensor of a prefill."""
         x = self.tok_emb(idx)
-        for block in self.blocks:
-            x = block(x)
+        for i, block in enumerate(self.blocks):
+            x = block(x, cache[i] if cache is not None else None)
+        if last_only:
+            x = x[:, -1:, :]
         x = self.norm_f(x)
         if self.cfg.tie_embeddings:
             return self.tok_emb.as_linear(x)

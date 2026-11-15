@@ -90,6 +90,37 @@ def _apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.
     return x * cos + rotated * sin
 
 
+class KVCache:
+    """Keys/values of one attention layer for incremental generation.
+
+    Allocated once at `max_len` positions and filled in place, so decoding
+    does not allocate a new, slightly longer tensor on every token.
+    """
+
+    def __init__(self, max_len: int):
+        self.max_len = max_len
+        self.offset = 0
+        self.keys: Optional[torch.Tensor] = None
+        self.values: Optional[torch.Tensor] = None
+
+    def update(self, k: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        B, H, T, D = k.shape
+        end = self.offset + T
+        if end > self.max_len:
+            raise ValueError(f"KV cache overflow: {end} > {self.max_len} positions")
+        if self.keys is None:
+            self.keys = k.new_zeros(B, H, self.max_len, D)
+            self.values = v.new_zeros(B, H, self.max_len, D)
+        self.keys[:, :, self.offset:end] = k
+        self.values[:, :, self.offset:end] = v
+        self.offset = end
+        return self.keys[:, :, :end], self.values[:, :, :end]
+
+
+def make_cache(cfg: "ModelConfig", max_len: Optional[int] = None) -> list[KVCache]:
+    return [KVCache(max_len or cfg.context_length) for _ in range(cfg.num_layers)]
+
+
 class RMSNorm(nn.Module):
     """RMSNorm: like LayerNorm but without subtracting the mean."""
     def __init__(self, dim: int, eps: float = 1e-5):
@@ -114,19 +145,33 @@ class CausalAttention(nn.Module):
         self.wv = nn.Linear(cfg.embedding_dim, kv_dim, bias=False)
         self.wo = nn.Linear(cfg.embedding_dim, cfg.embedding_dim, bias=False)
 
-    def forward(self, x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor,
+                cache: Optional[KVCache] = None) -> torch.Tensor:
         B, T, C = x.shape
         q = self.wq(x).view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         k = self.wk(x).view(B, T, self.n_kv_heads, self.head_dim).transpose(1, 2)
         v = self.wv(x).view(B, T, self.n_kv_heads, self.head_dim).transpose(1, 2)
-        q = _apply_rope(q, cos[:T], sin[:T])
-        k = _apply_rope(k, cos[:T], sin[:T])
+        offset = cache.offset if cache is not None else 0
+        q = _apply_rope(q, cos[offset:offset + T], sin[offset:offset + T])
+        k = _apply_rope(k, cos[offset:offset + T], sin[offset:offset + T])
+        if cache is not None:
+            k, v = cache.update(k, v)
         if self.n_kv_heads < self.n_heads:
             rep = self.n_heads // self.n_kv_heads
             k = k.repeat_interleave(rep, dim=1)
             v = v.repeat_interleave(rep, dim=1)
         # scaled_dot_product_attention picks Flash Attention when available
-        out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+        if offset == 0:
+            out = F.scaled_dot_product_attention(q, k, v, is_causal=T > 1)
+        elif T == 1:
+            # one new token on top of the cache sees every position
+            out = F.scaled_dot_product_attention(q, k, v)
+        else:
+            # is_causal aligns the mask top-left, wrong when keys outnumber
+            # queries: new token i must see the cache plus new tokens <= i.
+            q_pos = torch.arange(offset, offset + T, device=x.device)[:, None]
+            k_pos = torch.arange(offset + T, device=x.device)[None, :]
+            out = F.scaled_dot_product_attention(q, k, v, attn_mask=k_pos <= q_pos)
         out = out.transpose(1, 2).contiguous().view(B, T, C)
         return self.wo(out)
 
@@ -150,8 +195,9 @@ class Block(nn.Module):
         self.norm2 = RMSNorm(cfg.embedding_dim)
         self.ff = SwiGLU(cfg)
 
-    def forward(self, x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
-        x = x + self.attn(self.norm1(x), cos, sin)
+    def forward(self, x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor,
+                cache: Optional[KVCache] = None) -> torch.Tensor:
+        x = x + self.attn(self.norm1(x), cos, sin, cache)
         x = x + self.ff(self.norm2(x))
         return x
 
@@ -181,18 +227,26 @@ class MiniGPT(nn.Module):
             self._rope_cache = (cos, sin)
             self._rope_max_seq = cos.shape[0]
 
-    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+    def forward(self, idx: torch.Tensor, cache: Optional[list[KVCache]] = None,
+                last_only: bool = False) -> torch.Tensor:
+        """Logits [B, T, vocab]. With `cache` (one KVCache per layer) only the new
+        tokens in `idx` are processed; `last_only` returns logits for the last
+        position only ([B, 1, vocab]), which is all generation needs."""
         B, T = idx.shape
         x = self.tok_emb(idx)
-        self._ensure_rope(T, x.device, x.dtype)
+        offset = cache[0].offset if cache is not None else 0
+        self._ensure_rope(offset + T, x.device, x.dtype)
         cos, sin = self._rope_cache
-        for block in self.blocks:
+        for i, block in enumerate(self.blocks):
+            layer_cache = cache[i] if cache is not None else None
             if self.grad_checkpoint and self.training:
                 x = torch.utils.checkpoint.checkpoint(
                     block, x, cos, sin, use_reentrant=False
                 )
             else:
-                x = block(x, cos, sin)
+                x = block(x, cos, sin, layer_cache)
+        if last_only:
+            x = x[:, -1:, :]
         x = self.norm_f(x)
         if self.cfg.tie_embeddings:
             return F.linear(x, self.tok_emb.weight)
