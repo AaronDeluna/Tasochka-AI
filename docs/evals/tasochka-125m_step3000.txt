@@ -1,0 +1,452 @@
+# Tasochka AI honest evaluation (50 en prompts, none verbatim in training seeds)
+# checkpoint: checkpoints/server-125m/history/step_003000
+# vocab=32000 ctx=1024 layers=12 dim=768
+# sampling: temp=0.8 top_k=50 top_p=0.92 rep_penalty=1.18 no_repeat_ngram=3 seed=42 max_new=120
+
+=========================================================
+[01/50] CHAT       | greet
+USER: Hi there!
+---------------------------------------------------------
+Hello! How can I help you today?
+
+
+=========================================================
+[02/50] CHAT       | small-talk
+USER: It's raining all day and I'm bored.
+---------------------------------------------------------
+I've been living in a community that's been having some tough times lately. I feel like the crowd has gone out of balance, and it can be really frustrating to get around with anything we've got all night.
+
+We need to move out of this work for a couple days, and then there's going to be a bitterness. It's always better than when I'm feeling overwhelmed by our daily tasks, or I want to make sure I're moving up a lot. That way, people who are struggling can come together to help me find ways to do things more effectively.
+
+=========================================================
+[03/50] IDENTITY   | who are you
+USER: Who are you?
+---------------------------------------------------------
+I'm a bit of a beginner who's been at the art for over 20 years now, and I'd be happy to help you find out more about this piece.
+
+
+=========================================================
+[04/50] IDENTITY   | one sentence
+USER: Describe yourself in one sentence.
+---------------------------------------------------------
+"The new employee, Alex, has been working for almost 30 years now. He's a very talented player and I've seen him doing well with the team."
+
+
+=========================================================
+[05/50] FACT       | capital france
+USER: What is the capital of France?
+---------------------------------------------------------
+The capital of France is Paris. The capital of the Kingdom of Great Britain, which is situated in the city's heart and most famous landmarks.
+
+
+=========================================================
+[06/50] FACT       | capital japan
+USER: What is the capital of Japan?
+---------------------------------------------------------
+Japan's capital, Japan, is one of the most iconic and global cities in the world. It encompasses a wide range of industries, from ancient civilizations to historic landmarks like the Olympic Games and Louvre to art galleries, museums, and cultural studies. The city is home to an extensive population of artists, musicians, photographers, and entrepreneurs.
+
+The Capital of Japan is also known for its diverse cultures, history, and architecture. It has numerous different types, from classical music to modern technology. The capital of Osaka is the capital of Japan, which is the largest state-owned city in
+
+=========================================================
+[07/50] FACT       | photosynthesis
+USER: What is photosynthesis?
+---------------------------------------------------------
+Photosynthesis is the process by which light, water, and heat are produced in a variety of different forms. Some examples include:
+
+Photosynthesis occurs when carbon dioxide (CO2) molecules in our atmosphere absorb energy from sunlight, leaving behind more visible light than light. This process occurs because plants rely on oxygen to produce energy that can be used for photosynthesis.
+
+Fruit trees, on average, grow around 90 million pounds per year in their leaves each year. The fruit is the most diverse source of photosynthesis. It produces about 95% glucose, meaning it absorbs more heat compared to other
+
+=========================================================
+[08/50] FACT       | water boiling
+USER: At what temperature does water boil?
+---------------------------------------------------------
+At what temperature does water become more viscous?
+
+
+=========================================================
+[09/50] FACT       | shakespeare
+USER: Who wrote Romeo and Juliet?
+---------------------------------------------------------
+Jennie's Poetic (or Poetics) was the greatest writer of all time.
+
+
+=========================================================
+[10/50] FACT       | gravity
+USER: Explain gravity to a ten-year-old.
+---------------------------------------------------------
+Space-life is crucial for maintaining a healthy and safe living environment. Without gravity, life becomes difficult to sustain itself in the face of challenges. However, when we talk about gravity or space travel, our minds start to question the consequences of their actions on us.
+
+One key challenge is this issue. When faced with space travel (hands, feet) or other external obstacles, our brain can be forced to learn and adapt to new situations. This is particularly true in environments where you need support from people from different backgrounds and abilities. To address these concerns, we could use various strategies.
+
+=========================================================
+[11/50] REASONING  | add
+USER: What is 23 + 47?
+---------------------------------------------------------
+To find the 23 + 47, we need to subtract 12 from both sides of the equation.
+
+For an odd number of different ways, we can express it as: (3 * 3) = 21 + 4. Since 11 is even, its 2-digit positive integer is 6. So, this means that there are 2 multiples of 8 and 7 more than 6.
+
+
+=========================================================
+[12/50] REASONING  | money
+USER: Tom had $100 and spent $37. How much does he have left?
+---------------------------------------------------------
+Alright, I can't get my way down. The $100 he spent is $60 - $39 = $35.
+
+
+=========================================================
+[13/50] REASONING  | day-of-week
+USER: If today is Wednesday, what day will it be in 5 days?
+---------------------------------------------------------
+Sunday is Friday.
+
+
+=========================================================
+[14/50] INSTR      | five fruits
+USER: List five fruits.
+---------------------------------------------------------
+Here are five fruits.
+
+
+=========================================================
+[15/50] INSTR      | email
+USER: Write a short email asking my manager for a day off.
+---------------------------------------------------------
+Here's a simple email to give you the message:
+
+Dear manager,
+
+I'm thrilled that we're planning to launch our research. Our mission is to engage with the public on the topic of sustainability and its relevance to the planet. It's an opportunity to showcase the progress we've made in ensuring we meet the needs of all those living within us. I have been thinking about your ideas for how we could help shape the direction of this project. How can we ensure that we understand the key issues facing humanity?
+
+
+=========================================================
+[16/50] INSTR      | summarize
+USER: Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+---------------------------------------------------------
+The cat sat on the mat all day, watching birds through the window and ignoring everyone.
+
+
+=========================================================
+[17/50] CODE       | python reverse
+USER: Write a Python function that reverses a string.
+---------------------------------------------------------
+Here is a simple example of how you could write the function in Python:
+
+```python
+def reverse_string(s):
+    s = ''.join(reversed) for s.isalnum()
+    return s == s[::-1]
+```
+
+
+=========================================================
+[18/50] CREATIVE   | haiku
+USER: Write a haiku about autumn.
+---------------------------------------------------------
+The haiku about autumn is a beautiful and engaging addition to your story. Let's start with the summer, which has been around for more than two decades now. It might seem like an easy-to-follow piece of writing that effectively captures the essence of summer time. Here's a revised version:
+
+"While winter brings warmth to many regions in Europe, the weather is also unique and deeply intertwined. The summertime air provides ample sunlight, as well as shade. Its warmth enriches our homes, businesses, and economies, making it a key element of this country.
+
+I
+
+=========================================================
+[19/50] CREATIVE   | cafe name
+USER: Suggest a name for a cozy coffee shop.
+---------------------------------------------------------
+Liam, welcome to the cozy coffee shop.
+
+
+=========================================================
+[20/50] EMOTION    | nervous
+USER: I'm really nervous about my job interview tomorrow.
+---------------------------------------------------------
+I'm excited to have a great career in the tech industry and eager to learn from your experience. I've been thinking about the possibilities of working with businesses like Microsoft, Amazon, or Reddit.
+
+
+=========================================================
+[21/50] EDGE       | unknown person
+USER: Who is Bartholomew Quigglesworth from Tulsa?
+---------------------------------------------------------
+The original sentence is "Cruciale," but it doesn't mention that the novel's literary character has played a crucial role in shaping the plot.
+
+I made several changes to improve clarity and flow:
+
+- Changed "Arsenic" to "Aristolomew Quigglesworth" to use a more precise word choice.
+- Replaced "the novel's social media campaign" with "predictive campaigns" to simplify the phrase, as the phrase "the popular entertainment industry has largely dominated our daily lives" is implied by the contrast between the novel and
+
+=========================================================
+[22/50] EDGE       | impossible
+USER: When did humans first land on Jupiter?
+---------------------------------------------------------
+The question of whether we live on Jupiter, and how we would know it's actually a matter of time ago, is now being debated.
+
+A day or so before the Earth could land on Earth, we'd be discussing a series of observations that showed that Mars and Jupiter were formed by water in their own right. The Moon was forming at a constant speed as it heated up warm waters for more than a year, then cooled down to its original temperature while the Sun had already reached its closest atmosphere.
+
+
+=========================================================
+[23/50] CONTEXT    | remember name
+USER: My name is Alex. What is my name?
+---------------------------------------------------------
+My name is Alex. I am John and I'm writing to tell you about your company, which offers a wide range of products that cater to the needs of our clients.
+
+
+=========================================================
+[24/50] CHAT       | how are you
+USER: How are you doing today?
+---------------------------------------------------------
+I work at the business station in town, and I've been working here for a few months now. I do everything myself, though it's me own little secret.
+
+First things first thing, we're talking about our customers who have made some incredible investments, like my sales and marketing efforts. We've got a reputation for producing excellent products that cater to their needs and preferences. But then there's a sense of community around this company. It's a place where people can learn from each other, even if they don't need any additional skills or experience.
+
+
+Of course, that
+
+=========================================================
+[25/50] CHAT       | weekend plans
+USER: Any ideas for what to do this weekend?
+---------------------------------------------------------
+Let's start by identifying the key features and content of your event. I'll focus on presenting as a guest speaker or presentation about the project, highlighting their strengths and weaknesses, and providing feedback on how to respond to comments.
+
+One key feature is our platform-based "Inclusive Education" – it allows attendees to connect with real-world audiences, provide meaningful feedback, and build empathy in the learning process. This can be especially useful when they're young and willing to learn from others' experiences.
+
+We could also consider using social media platforms like Instagram or Facebook to share updates about social
+
+=========================================================
+[26/50] IDENTITY   | can you think
+USER: Can you think like a human?
+---------------------------------------------------------
+My knowledge of the human body is greatly enhanced by the study of the anatomy, physiology, and nervous system. The skeletal structures of bones, tendons, ligaments, joints, and even their function are very specialized and closely related to physical processes. I have seen that the brain and the brain exhibit many characteristics of this complex organ, including the ability to learn, regulate, and reorganize complex neural networks, and the development of these functions across various tissues.
+
+
+=========================================================
+[27/50] FACT       | largest planet
+USER: What is the largest planet in our solar system?
+---------------------------------------------------------
+The largest planet in our solar system is a vast, complex and seemingly infinite variety.
+
+
+=========================================================
+[28/50] FACT       | dna
+USER: What is DNA?
+---------------------------------------------------------
+DNA is a necessary part of the body's natural defense against infection. It plays an essential role in protecting your body from any harmful chemicals and toxins that may have been harmed by human activities, such as cancer, heart attacks, or even certain cancers.
+
+Skin cancer can be due to various causes, including:
+
+It has been found that skin cancer accounts for 5% to 50% of cases of skin cancer. This includes the following conditions:
+- Skin cancers caused by sun exposure
+- Genetic predisposition
+- Cardiovascular diseases
+- Cancer risk factors (such as smoking,
+
+=========================================================
+[29/50] FACT       | ww2 end
+USER: When did World War II end?
+---------------------------------------------------------
+The future of World War II has always been a long-standing affair, and its impact on history is truly fascinating. The U.S. was declared the first American country to invade Europe in 1939 by Germany in 1945.
+
+
+=========================================================
+[30/50] FACT       | speed of light
+USER: How fast does light travel?
+---------------------------------------------------------
+Loud, you can think of the speed and clarity of light travel.
+
+
+=========================================================
+[31/50] FACT       | volcano
+USER: How do volcanoes form?
+---------------------------------------------------------
+The question of how to tell when a volcano is straightforward and easy to understand.
+
+
+=========================================================
+[32/50] FACT       | mona lisa
+USER: Who painted the Mona Lisa?
+---------------------------------------------------------
+The Mona Lisa, a long-lost and picturesque character in the modern world. It's a great choice for your story.
+
+
+=========================================================
+[33/50] FACT       | heart
+USER: What does the human heart do?
+---------------------------------------------------------
+The human heart is a complex and multifaceted system of interconnected systems that are shaped by the interplay between various parts of our body. Each part plays a crucial role in shaping the course of life, guiding us to develop the next level of understanding for us all.
+
+One of the key features of this process is its ability to:
+
+1. Improve or adapt: The brain has a vast array of cells and nerves that can be trained on an individual's own organs, organs, and muscles. These cells need oxygen to survive.
+2. Connect with others: Individuals with unique needs like communication
+
+=========================================================
+[34/50] FACT       | inflation
+USER: What is inflation in economics?
+---------------------------------------------------------
+Gratitude in economics refers to the rate of change or increase due to a set period. It's a statistical measure that tells you how much money you're willing to spend on a particular topic, and if you know what it means for your business or industry.
+
+In this case, you'll be asking about your current economic conditions, including unemployment rates, inflation rates, interest rates, and other financial indicators. If your current situation is similar to your previous job satisfaction level (Bachelor's degree), you might also want to look at a specific example of an issue with your company or industry
+
+=========================================================
+[35/50] FACT       | seasons
+USER: Why does Earth have seasons?
+---------------------------------------------------------
+Let's consider a simple solution. Earth has seasons in the Northern Hemisphere, and Earth has winter seasons in areas with strong seasonal cycles. Since there are no natural daylight or seasoning systems for these seasons, we can say that it is possible to use more indirect methods of travel from one place to another, such as the West Coast or the West Atlantic.
+
+In this case, we know that the average temperature is around 32 degrees Fahrenheit (32 degrees Fahrenheit) but the wind is low enough to allow us to get near 24-25 degrees Fahrenheit (-292 degrees). We then calculate how much
+
+=========================================================
+[36/50] REASONING  | multiply
+USER: What is 12 times 8?
+---------------------------------------------------------
+In programming, 9 times a number is equal to the first number. This means that if you want to count all possible combinations of elements in an array and then divide by 10, you can use only one element, but this would be no more than enough to get rid of each other.
+
+
+=========================================================
+[37/50] REASONING  | apples
+USER: I have 3 apples and buy 5 more, then eat 2. How many apples do I have?
+---------------------------------------------------------
+I can't help but think that's actually a classic problem in mathematics. Let's analyze the given information:
+
+Hours = 2.5
+Cities = {1, 2, 3}
+Positive relationships = {2, 4, 5},
+
+
+=========================================================
+[38/50] REASONING  | train speed
+USER: A train travels 60 miles in 1 hour. How far will it go in 3 hours?
+---------------------------------------------------------
+To solve this problem, we need to divide the total distance traveled by the time of day (6), which is 7 minutes.
+
+For each hour, there are 10 * 1 hour = 8 hours that the train takes in.
+
+
+=========================================================
+[39/50] REASONING  | older
+USER: Anna is older than Ben. Ben is older than Carl. Who is the youngest?
+---------------------------------------------------------
+Alice's a charming young woman, a curious young woman. She seems to be one of the most enigmatic children of all time: Emma, Sophia, and Jane's father, as well as an interesting couple who they love.
+
+But Ben is more likely to have been known for her first name, Elizabeth. Her mother was a prominent family member in the community, but she is said to have died in childbirth, just like her parents. In 1526, Jane married Barbara, daughter of Henry II, who had a large wife and sister. Jane also had a grandchild,
+
+=========================================================
+[40/50] INSTR      | three tips sleep
+USER: Give me three tips for better sleep.
+---------------------------------------------------------
+When faced with the common problem of sleepiness, it's essential to identify the underlying causes and approach the problem. Here are some key approaches:
+
+One way to address the root cause is to use a simple yet effective approach that can help mitigate its effects. For example, instead of simply focusing on an object, you might consider using a more efficient method called 'breathing'. This method uses a more active and controlled breathing technique, allowing your body to breathe deeply.
+
+Another approach is to try to remove or replace any existing sleep aids. These devices allow for a more flexible and effective
+
+=========================================================
+[41/50] INSTR      | explain simply
+USER: Explain what a computer is in simple words.
+---------------------------------------------------------
+Imagine that the computer is a complex device in which each of your four major components have distinct connections to other computers. Each node has multiple connections, and each one may overlap as many nodes across multiple networks simultaneously.
+
+One possible connection between a computer's network, a network topology, or a simple interface would be the "turning" or "floppy" connected with the host server's drive. This could lead to different types of routers, such as:
+
+- Ethernet systems (e.g., WiFi) - A protocol for connecting to your physical network using a specific set
+
+=========================================================
+[42/50] INSTR      | rewrite formal
+USER: Rewrite this more formally: hey, can u send me the report asap?
+---------------------------------------------------------
+Let's focus on the following details:
+
+The report is not a direct statement, but it can be used to provide more information about what is being asked in the current situation. Here are some examples of phrases or sentences that might be useful for the reader:
+
+"I want to understand how I feel about my job search."
+
+These phrases convey more specific information and help to clarify your concerns. They're also effective in conveying important information, making the message clearer and more nuanced. For instance, "Hey, could u send me the report asap?" would make the argument more
+
+=========================================================
+[43/50] INSTR      | pros cons
+USER: What are the pros and cons of working from home?
+---------------------------------------------------------
+Working from home can be both practical and challenging, but there are also several potential pros and cons.
+
+One major benefit of working from home is the financial stability. There are plenty of options available to people with limited income, food production, or renting. This flexibility in your living space makes it a versatile option that could take up to three months without even taking off on vacation. Additionally, some homes in areas with low incomes may require more transportation options, as they have fewer flights and other transportation options.
+
+
+=========================================================
+[44/50] INSTR      | recipe
+USER: How do I make a simple omelette?
+---------------------------------------------------------
+When I make a simple omelette, I want to create the most vivid and descriptive images that convey the essence of your story. Here's how you can use this as an example:
+
+I made the opening sentence more concise and evocative:
+- Changed "beauty" to "a lot," which is the general term for the sentence.
+- Added "in contrast", which is a bit redundant.
+
+These changes aim to preserve the original meaning while still conveying the core idea. I also avoided using phrases like "a few words" or "buddying
+
+=========================================================
+[45/50] CODE       | python sum
+USER: Write a Python function that returns the sum of a list of numbers.
+---------------------------------------------------------
+Here is a Python function that finds the sum of an array of numbers:
+```python
+def main():
+    int = 0
+    while True:
+        for i, num in enumerate(numbers):
+            if i <= 100 and i++ or j <= i -i - i + 1:
+                return i += 1
+            else:
+                print("Sum of all numbers with a given range.")
+
+    total_sum = 0
+```
+
+In this version, we've already found that there are some common exceptions to include `count` but also include a `max` sign. The `min
+
+=========================================================
+[46/50] CODE       | what is api
+USER: What is an API in programming?
+---------------------------------------------------------
+An API in Python is a library that stores the values of multiple files. In other words, it's an excellent example for data analysis and machine learning.
+
+Here are some general guidelines:
+
+1. Open Access Compile (DES): This code defines how to read, write, and display files on the Internet.
+2. Visualize Files (Upper Main) by Doing More with Access Compilation (UT).
+3. Perform Streaming With Text (FAM), which provides instructions for creating file formats from different sources.
+4. Handle File (BFS
+
+=========================================================
+[47/50] CREATIVE   | short story
+USER: Write a two-sentence story about a lost dog.
+---------------------------------------------------------
+The lost dog is an incredible creature, a gift that transcends the raw and unmatched emotions of humans. I love my story about a lost wolf, its unique charm and cleverness.
+
+
+=========================================================
+[48/50] CREATIVE   | slogan
+USER: Create a slogan for a bicycle shop.
+---------------------------------------------------------
+Welcome to the Bike and Dove, a true masterpiece of bicycle history. To get started, I want to define a sustainable bicycle business that incorporates natural, eco-friendly options. This name is "Bicycle Span," which offers an environmentally friendly alternative to conventional bike designs for bikes and bike rentals.
+
+Here's what you would like me to do:
+
+1. Start with the concept of "furniture" or "driverpooling."
+2. Go back to "Giving in a bicycle store"
+3. Look up the brand name of
+
+=========================================================
+[49/50] EMOTION    | sad
+USER: I feel sad today. Can you cheer me up?
+---------------------------------------------------------
+I'm so happy to be here. I love the sense of joy that comes with living in a world where my mind's changed and the people around me feel like a better place. As a mom, I want to make sure that every child has their own unique experience, interests, and experiences.
+
+
+=========================================================
+[50/50] EDGE       | future
+USER: What will the weather be like on March 3, 2091?
+---------------------------------------------------------
+The weather is very exciting and unpredictable. The climate changes, which have caused wildfires in the area of natural resources to collapse, are affecting the state's economy, economies, and wildlife populations. This change has profound implications for the people of California, as they rely on their crops and water to sustain themselves and their families.
+
+As the population continues to increase in size and shape over time, some residents will be more dependent on the sea for their livelihoods. The growing population, particularly from the early 1900s through the 1890s, has seen a significant decline in the number of native plants that depend
+

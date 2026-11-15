@@ -1,0 +1,441 @@
+# Tasochka AI honest evaluation (50 en prompts, none verbatim in training seeds)
+# checkpoint: checkpoints/server-125m/history/step_014000
+# vocab=32000 ctx=1024 layers=12 dim=768
+# sampling: temp=0.8 top_k=50 top_p=0.92 rep_penalty=1.18 no_repeat_ngram=3 seed=42 max_new=120
+
+=========================================================
+[01/50] CHAT       | greet
+USER: Hi there!
+---------------------------------------------------------
+Hello! How can I help you today?
+
+
+=========================================================
+[02/50] CHAT       | small-talk
+USER: It's raining all day and I'm bored.
+---------------------------------------------------------
+*I take a deep breath, feeling the weight of my responsibilities on my shoulders. It's a reminder that life is not always easy, and I'm used to it all at once.* I remember feeling like we were just about to reach for our next big assignment, but I couldn't help but notice how quickly things are taking in my mind.
+
+
+=========================================================
+[03/50] IDENTITY   | who are you
+USER: Who are you?
+---------------------------------------------------------
+I'm the person who helps me navigate through my mental and physical health issues. I've been here for about 20 years, working with individuals like myself, family members, friends, and even myself to address a wide range of issues. My team is trained to listen attentively to their emotional well-being, provide empathetic support, and assist in managing stress.
+
+My primary goal is to help them develop healthier coping strategies, such as deep breathing exercises or meditation techniques, which can be beneficial for both personal and professional purposes. We also work closely with families and caregivers, providing personalized advice and support
+
+=========================================================
+[04/50] IDENTITY   | one sentence
+USER: Describe yourself in one sentence.
+---------------------------------------------------------
+I can help you with a wide range of writing tasks, including grammar and style suggestions. I'm here to offer constructive feedback on your text and suggest alternative phrasings where necessary.
+
+
+=========================================================
+[05/50] FACT       | capital france
+USER: What is the capital of France?
+---------------------------------------------------------
+Paris is a city located in the West Bank of France, approximately halfway between Paris and Rome. It's not entirely capitalized but it has become an important transportation hub for several million people, making it a popular choice for tourists and visitors alike.
+
+
+=========================================================
+[06/50] FACT       | capital japan
+USER: What is the capital of Japan?
+---------------------------------------------------------
+The capital of Japan is Tokyo. It's the most populous city in the country, and it has a population of approximately 8 million people.
+
+
+=========================================================
+[07/50] FACT       | photosynthesis
+USER: What is photosynthesis?
+---------------------------------------------------------
+Citric photosynthesis is a process that occurs in plants, algae, and some bacteria. This process involves the capture of carbon dioxide from the air by photosynthesis. The nitrogen cycle works to break down the organic material in leaves, stems, and roots into simpler sugars as they grow.
+
+
+=========================================================
+[08/50] FACT       | water boiling
+USER: At what temperature does water boil?
+---------------------------------------------------------
+At what temperature does water boil?
+
+
+=========================================================
+[09/50] FACT       | shakespeare
+USER: Who wrote Romeo and Juliet?
+---------------------------------------------------------
+In Romeo and Juliet, Romeo is often compared to the sunken idols of Paris, but they're not related. They were part of a group called "Lords," which was originally inspired by Lord Byron's poem "The Songs of the Wind."
+
+While both authors agreed on the roles of Luca Pacioli and Augustus, they differ in their perspective on each other's work. Lucian was one of the most prominent figures of Italian mythology, while Camillo was a lesser-known figure from history that emerged in the early 20th century as a romantic partner
+
+=========================================================
+[10/50] FACT       | gravity
+USER: Explain gravity to a ten-year-old.
+---------------------------------------------------------
+The gravity of a 10-year-old can be attributed to the Earth's gravitational field, which is in the form of two massive charged particles: protons and electrons. These particles have no mass, but they do interact with each other like the forces between atoms. As the charge at any point on their surface warms, the force between them becomes weaker, causing the particles' motion to move more quickly than before.
+
+Einstein's law states that the force exerted by the particle as it rises or falls depends on its position relative to the rest of the object. If a particle's position
+
+=========================================================
+[11/50] REASONING  | add
+USER: What is 23 + 47?
+---------------------------------------------------------
+The formula for finding the remainder of a polynomial equation is to find the roots by dividing both sides of the equation by (x - 1), and then combining like terms. Here's how it works:
+
+a = 21/2 + 4/3 + 5/4 + 6/8
+= 34/16 + 16/16
+= 27
+
+Therefore, 343/216 = 25. This means that the remainder when 17^2005 is divided by 7 is 25.
+
+
+=========================================================
+[12/50] REASONING  | money
+USER: Tom had $100 and spent $37. How much does he have left?
+---------------------------------------------------------
+Let's analyze the situation: Tom has $100 left for Tom, and he spends $37 on Tom. To find out how much Tom has left, we need to subtract the cost of Tom from the total price: $37 - $37 = $385.
+
+Now, let's divide both sides by $3 to isolate the variable: $38 / 3 = $397. This means that Tom has a total cost of $395 as a fraction of $40.
+
+
+=========================================================
+[13/50] REASONING  | day-of-week
+USER: If today is Wednesday, what day will it be in 5 days?
+---------------------------------------------------------
+In 5 days, the snail will climb 3 feet up and slip 2 feet back, making it 4 days of net progress.
+
+
+=========================================================
+[14/50] INSTR      | five fruits
+USER: List five fruits.
+---------------------------------------------------------
+Here are five fruits:
+1. Peanut Butter - This is a type of peanut, and it is also known as white but can be found in any variety of fruit.
+2. Pomegranate Seedling - The seeds are tiny, with large pores that make them more nutritious.
+3. Cornmeal or Sour Cheese - These contain the amino acids tryptophan and triterpenoid.
+4. White Peach Seeds - These are found in the seeds of many fruits, but they have very little oil content.
+5. Beans - They contain
+
+=========================================================
+[15/50] INSTR      | email
+USER: Write a short email asking my manager for a day off.
+---------------------------------------------------------
+To get your manager back on track, let's start by scheduling a few hours off to review their day and make sure everyone is aware of their responsibilities.
+
+On the first Monday in the week, we'll take a moment to collect a detailed report detailing all tasks completed within that timeframe. This will give us a clear picture of what they're doing, and I'd like to discuss how our tasks are handling those deadlines. We can schedule this meeting at 5 PM on Tuesday.
+
+
+=========================================================
+[16/50] INSTR      | summarize
+USER: Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+---------------------------------------------------------
+Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+
+
+=========================================================
+[17/50] CODE       | python reverse
+USER: Write a Python function that reverses a string.
+---------------------------------------------------------
+Here's a Python function that reverses a string in the following way:
+
+```python
+def reverse_string(s):
+    return s[::-1] + '\n'.join([c for c in s if c.isalnum())]
+```
+
+This function first removes all non-alphanumeric characters from the input string and converts it to lowercase before checking if it's alphabets or not. It then joins them back into a string using regular expressions, and checks if each character is an alphanumerics word (i.e.,
+
+=========================================================
+[18/50] CREATIVE   | haiku
+USER: Write a haiku about autumn.
+---------------------------------------------------------
+As the days get longer, the mist-shrouded streets of a small town begin to crumble beneath the shroud. The locals are all lost in their twilight air, as if it's been watching them from afar, waiting for a glimpse of what lies ahead. They stand before a bustling street that seems to bore into the distance, its dark corridors smoldering with an otherworldly glow like living things.
+
+The wind carries with it the faintest whisper, but it's like no one knows how to predict what will happen next. A lone figure comes to
+
+=========================================================
+[19/50] CREATIVE   | cafe name
+USER: Suggest a name for a cozy coffee shop.
+---------------------------------------------------------
+Welcome to our cozy coffee shop. I'm excited to dive into this space and make sure we have a great atmosphere. Let me see if you can find a spot that suits your schedule? We've got a great selection of cozestocks, from the beautiful Pinellas with their lush greenery and vibrant flowers, to the more rustic, high-end boutiques such as Caffès, La Calais, or Balsa. Would you like us to recommend some local cuisine that's both delicious and delicious?
+
+
+=========================================================
+[20/50] EMOTION    | nervous
+USER: I'm really nervous about my job interview tomorrow.
+---------------------------------------------------------
+It's completely normal to feel nervous about a new job, especially when you're not sure of your skills and interests. One thing that might help is if I'm unsure about my current responsibilities or the company culture. If so, it could be helpful to have an open conversation with me to discuss your concerns and potentially find a better fit for me in the future.
+
+
+=========================================================
+[21/50] EDGE       | unknown person
+USER: Who is Bartholomew Quigglesworth from Tulsa?
+---------------------------------------------------------
+Kathleen Quigglesworth, a young and talented journalist from Tulsa, was born in 1930. Born in Lakertown, Vermont, to parents who were not in school or had no formal education. In 1933, she joined the anti-apartheid movement in protesting the widespread segregation of African American women.
+
+Quiggles Worthing was a prolific writer and journalist, writing about numerous social issues including racism, sexism, and oppression. She also wrote articles on gender discrimination and inequality, advocating for policies that could affect Black Americans, but also promoting alternative solutions
+
+=========================================================
+[22/50] EDGE       | impossible
+USER: When did humans first land on Jupiter?
+---------------------------------------------------------
+Human evolution began in the mid-20th century, with the development of a new civilization that stretched from the Middle East to China. The human species is believed to have descended from some ancestor, and it was not until the early 21st century that humans began to make contact with other species.
+
+
+=========================================================
+[23/50] CONTEXT    | remember name
+USER: My name is Alex. What is my name?
+---------------------------------------------------------
+My name is Alex. I'm a bartender at Greenfield, and we've been working on this side for about 5 years now. My business has always been to sell and sell handmade goods and services in the community, so it's a good fit.
+
+As for my name, it sounds like you might be asking – a great guy, someone who's been with me since college. I spent several years researching and interviewing various suppliers, but nothing more than being able to compare prices, read reviews, and try different items before making any final decisions. We're all excited
+
+=========================================================
+[24/50] CHAT       | how are you
+USER: How are you doing today?
+---------------------------------------------------------
+Managing a team in this fast-paced industry requires some strategic planning. To start, it's essential to have a clear objective and set realistic goals for the team. This includes defining the company's vision, defining their unique value proposition (UVP), identifying key performance indicators (KPIs) that will drive growth and development, and establishing a shared vision for success.
+
+One crucial aspect is setting clear goals and objectives, which will guide everyone involved in the project. This could include tasks such as product development, market research, training, or mentorship. Having clear objectives can help avoid confusion
+
+=========================================================
+[25/50] CHAT       | weekend plans
+USER: Any ideas for what to do this weekend?
+---------------------------------------------------------
+This weekend is a great start to the week, but it could be a fun and engaging activity. Here are some ideas:
+
+1. **Get started with something that interests you**: Write a story or journal entry that showcases your interests in gardening, writing, or other creative pursuits. This can help spark new perspectives and make the writing more relatable.
+2. **Create a video series or playlist for kids to share**: Create a blog post about plants, gardening tips, and garden themes. You can even create a mini-edition of plants by sharing its content or offering a guest
+
+=========================================================
+[26/50] IDENTITY   | can you think
+USER: Can you think like a human?
+---------------------------------------------------------
+As a human, I'm not just a creature of the night. I've walked through countless spaces across time and space for thousands of years, each one influencing the course of events that will unfold in my lifetime.
+
+I have to admit, I was quite surprised by how much time it took me over many years to build these structures. There's something about being able to move at a constant pace without stopping or worrying about the intricacies of their construction. It's an incredibly complex process, but every step forward has taught me what to expect from this civilization.
+
+I remember when I first
+
+=========================================================
+[27/50] FACT       | largest planet
+USER: What is the largest planet in our solar system?
+---------------------------------------------------------
+The largest planet in our solar system, dubbed Kepler-33b, is a massive, rocky exoplanet about the size of Earth. It orbits its star at an estimated distance of approximately 5 billion light years from earth and can be found in the constellation Sagittarius.
+
+Kepler-3b is composed of two main bodies: the Sun and a large, gas-rich atmosphere that provides heating and cooling for the planet. These bodies are orbiting the same distance as it orbits its host star, passing close to its parent star, but they are not directly observed by humans.
+
+
+=========================================================
+[28/50] FACT       | dna
+USER: What is DNA?
+---------------------------------------------------------
+DNA is a type of cell that exists in cells. It consists of genetic material, which are genetic instructions for how the DNA molecule works together to form proteins and other substances. There are several types of DNA, including:
+
+1. **Biological DNA**: A genetic element (a single nucleotide sugar) is attached to an individual's cell membrane through a process known as endocytosis. This ends up binding to specific proteins or lipids. Examples include insulin, cholesterol, and cholesterol.
+2. **Molecule-Specific DNA**: Molecules can be made using multiple molecules,
+
+=========================================================
+[29/50] FACT       | ww2 end
+USER: When did World War II end?
+---------------------------------------------------------
+World War II, also known as World Wars I and II, was a conflict that lasted from June 1944 to August 1945. It began in Europe on July 5th 1945 after the Allied invasion of Czechoslovakia by Germany's Allies, ending in defeat at Normandy. The war marked a significant turning point in the Cold War era, marking the first major victory for the United States against Nazi aggression.
+
+The war saw the United Nations declare war on Hitler in June 1940, followed by a period of peace between the Axis powers before the fall of Berlin on September 7th, 1941. This
+
+=========================================================
+[30/50] FACT       | speed of light
+USER: How fast does light travel?
+---------------------------------------------------------
+This question is often asked about how fast light travels. As a result, the speed of light is a measure of its velocity, which in this case is f/2 = 2 meters per second (f).
+
+
+=========================================================
+[31/50] FACT       | volcano
+USER: How do volcanoes form?
+---------------------------------------------------------
+Rocks and geysers form when tectonic plates move at different rates, creating complex structures that can be seen in the rocks of older volcanoes. These structures can often contain unique features, such as massive columns or valleys, which are formed by the movement of tectonic plate boundaries.
+
+In younger volcanic regions, a rock deposit may form as part of the magma chamber, where it is pushed by the rising rock (or, more accurately, igneous rocks) over time. This process is known as metamorphism, where molten rocks erupt from cracks in the surface, providing new minerals for the rocks to
+
+=========================================================
+[32/50] FACT       | mona lisa
+USER: Who painted the Mona Lisa?
+---------------------------------------------------------
+The Mona Lisa was a massive painting created by the great Italian artist, Titian. It's an early version of the Mona-Sicher painting done by Titian himself, depicting scenes from his life in Italy and the court rooms of Florence during his lifetime. The painting is considered one of the most significant works of art, and it showcases the artistic style of Titian, with a complex mix of traditional and contemporary motifs, including his personal portraits and portraits.
+
+
+=========================================================
+[33/50] FACT       | heart
+USER: What does the human heart do?
+---------------------------------------------------------
+The human heart is a complex system of cells, made up of billions of stem cells and nerve cells. It carries oxygen-rich blood to the brain, where it can be used by various organs for tasks such as digestion, growth, and communication.
+
+As a result, the heart's job is to provide oxygenated blood to those who need it most. However, some individuals may struggle with certain medical conditions, such as high blood pressure or angina, which can make it difficult to breathe properly and maintain proper circulation. Some patients may experience symptoms like chest tightness, shortness of breath
+
+=========================================================
+[34/50] FACT       | inflation
+USER: What is inflation in economics?
+---------------------------------------------------------
+In economics, inflation refers to the phenomenon of price fluctuations that result from economic activity over a long period of time. It is a phenomenon that occurs when prices tend to fall due to factors such as supply-side issues, market forces, or external conditions.
+
+When an economy experiences inflation, it means that there are more people who can purchase and sell goods than at any given point in their history. This means that they have bought those products in bulk, which then leads to higher real incomes. For example, if the economy experienced inflation, the purchasing power of this population would likely be more expensive
+
+=========================================================
+[35/50] FACT       | seasons
+USER: Why does Earth have seasons?
+---------------------------------------------------------
+The Earth has seasons due to its gravitational field, which is the curvature of spacetime around it. It's a complex system that includes six distinct types: black holes, white dwarfs, neutron stars, and massive stars. Each type of solar System contains billions of suns, some of which have already passed through their core or are now reaching full-massive speeds, making them the most abundant in our universe.
+
+As a result, Earth has four different seasons: summer (June), winter (December), autumn (October), and spring (March). These seasons are characterized by intense variations in temperature
+
+=========================================================
+[36/50] REASONING  | multiply
+USER: What is 12 times 8?
+---------------------------------------------------------
+To find the value of 12, we can start by dividing the number of times 8 by the product of its digits.
+
+12 = 12 * 6
+6 = 16
+
+So, 12 is an even number. The result is a multiple of 4 and 5, which is 7.
+
+
+=========================================================
+[37/50] REASONING  | apples
+USER: I have 3 apples and buy 5 more, then eat 2. How many apples do I have?
+---------------------------------------------------------
+To solve this problem, we need to determine the value of x, which represents the number of apples in the basket. We are given that 3 apples and 2 apples are left with 4 more boxes than each other, so we can set up the following equation:
+
+x + (3 - 3) = 12
+We know that if 5 apples were taken from both sets, their total number would be 12. The solution is simple because there are 6 * 9 = 45 apples. However, since we're counting only these cases, we also have a count of remaining items that are not on either
+
+=========================================================
+[38/50] REASONING  | train speed
+USER: A train travels 60 miles in 1 hour. How far will it go in 3 hours?
+---------------------------------------------------------
+To find out how far it will go in 3 hours, we first need to determine the total number of miles (60) that the train travels. Since the train has a speed of 60 mph (80 km/h), we can convert this into an equivalent mile by multiplying 40 feet by 4 feet (8 meters).
+
+So, the total distance traveled is 60 miles * 4 feet/bus = 70 miles. Therefore, it will take 30 days for the train to travel the complete path from Chicago to New York City.
+
+
+=========================================================
+[39/50] REASONING  | older
+USER: Anna is older than Ben. Ben is older than Carl. Who is the youngest?
+---------------------------------------------------------
+Ben is younger than Carl.
+
+
+=========================================================
+[40/50] INSTR      | three tips sleep
+USER: Give me three tips for better sleep.
+---------------------------------------------------------
+Improving sleep quality is essential for overall well-being, and it's especially important when you're trying to get a good night's rest. Here are three tips:
+
+First, establish a consistent sleep routine. This can be as simple as having a daily ritual like reading or meditation, which helps regulate your body's internal clock. Make sure to stick to a consistent bedtime routine, avoiding light or noise when bed time comes up.
+
+Second, take regular breaks throughout the day. This will help you clear your mind and reduce stress. You don't need to spend hours in bed;
+
+=========================================================
+[41/50] INSTR      | explain simply
+USER: Explain what a computer is in simple words.
+---------------------------------------------------------
+A computer is a machine that uses its power to perform tasks. It has many features and capabilities, including:
+
+1. **Control**: A system in which the task is done by the user or the device.
+2. **Memory usage**: The amount of data that the processor can store in memory, processing it efficiently.
+3. **Operational efficiency**: The accuracy of information processing through algorithms.
+4. **Generosity**: The degree of control over an object's behavior.
+5. **Performance**: The performance of a process over time.
+6.
+
+=========================================================
+[42/50] INSTR      | rewrite formal
+USER: Rewrite this more formally: hey, can u send me the report asap?
+---------------------------------------------------------
+The provided response is a clear and concise way to express the idea. Here's a possible rewriting:
+
+Can u send me the report asap? I can't understand it yet, but it seems to be working.
+
+
+=========================================================
+[43/50] INSTR      | pros cons
+USER: What are the pros and cons of working from home?
+---------------------------------------------------------
+Working from home offers several advantages, but some of the key benefits include:
+
+It allows you to set up a secure and comfortable space for yourself during your free time. This means you can have uninterrupted sleep patterns, reduced energy costs, and fewer distractions, which can be beneficial for both work and family life.
+
+The safety and well-being of your loved ones is also crucial when working from home. You'll have peace of mind knowing that there are no external hazards or threats at all. This level of protection can help reduce stress levels and improve overall health.
+
+
+On
+
+=========================================================
+[44/50] INSTR      | recipe
+USER: How do I make a simple omelette?
+---------------------------------------------------------
+Making a simple omelette is crucial to ensure that it has the right balance of flavors and aromas, and it's not just about serving dishes. To make your omelets, follow these steps:
+
+First, review ingredients from your kitchen. Look for sources like traditional Italian sauces or signature meats, which can often be found in the local market. These items are typically prepared using a variety of techniques, such as roasting eggs, cooking them until tender, and then processing them into crisps.
+
+Next, think about serving with caution around added sugars. Too much
+
+=========================================================
+[45/50] CODE       | python sum
+USER: Write a Python function that returns the sum of a list of numbers.
+---------------------------------------------------------
+Here's a Python function that calculates the sum of a list of numbers using a generator expression:
+
+```python
+def calculate_sum(numbers):
+    return sum(x**2 for x in numbers)
+
+# Example usage:
+numbers = [1, 2, 3]
+result = calculate_ summing(numbers)
+print(f"The sum of the numbers is: {result}")
+```
+
+In this code:
+- The `if` statement checks if the input list `numbers` contains non-alphanumeric characters (either lowercase or upp
+
+=========================================================
+[46/50] CODE       | what is api
+USER: What is an API in programming?
+---------------------------------------------------------
+An API is a type of data structure that manages the relationships between entities in an application. It provides access to a database, data structures, and other resources by providing a way for users to interact with the entity.
+
+In other words, an API is any collection of code examples that can be executed across multiple platforms or applications. The goal of an API, as you mentioned, is to provide the code that interacts with a specific entity. The idea behind an API extends beyond just providing information about the objects within the database, but rather serving as a tool for interacting with the data it contains.
+
+=========================================================
+[47/50] CREATIVE   | short story
+USER: Write a two-sentence story about a lost dog.
+---------------------------------------------------------
+The cat's eyes sparkled with an otherworldly light, as if the very fabric of reality itself was woven from threads of countless threads. As it wandered its path, the dog felt an inexplicable pull, sensing a faint hum of anxiety or fear. The owner, a wise and curious soul, found herself lost in her past, waiting for her turn to reveal more about the lost animal's past.
+
+
+=========================================================
+[48/50] CREATIVE   | slogan
+USER: Create a slogan for a bicycle shop.
+---------------------------------------------------------
+Here's a simple slogan for a bicycle shop:
+"The future of bicycles, the most important thing in the world!"
+
+
+=========================================================
+[49/50] EMOTION    | sad
+USER: I feel sad today. Can you cheer me up?
+---------------------------------------------------------
+I'm so sorry for the disappointment. I'm a man of great strength, but I am not in favor of doing so. I have to admit, it's disappointing to see my brothers and sisters struggling with their own demons. They were always looking for someone who could help them, if they'd been wise enough to do that. However, despite having all the hard work and determination to support me, I feel like they are just trying to make ends meet or achieve something even more difficult.
+
+
+=========================================================
+[50/50] EDGE       | future
+USER: What will the weather be like on March 3, 2091?
+---------------------------------------------------------
+On March 3, 2091, the temperature on this day is 37.2 degrees Celsius (395°F), which is above the norm in New York City.
+
+The weather for that day will be mostly sunny with minimal wind and mild rain. The town has plenty of light hours, but most of the days are spent outdoors. There's a lot of sunshine to enjoy, especially during this peak time.
+
+

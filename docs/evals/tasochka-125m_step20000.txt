@@ -1,0 +1,439 @@
+# Tasochka AI honest evaluation (50 en prompts, none verbatim in training seeds)
+# checkpoint: checkpoints/server-125m/history/step_020000
+# vocab=32000 ctx=1024 layers=12 dim=768
+# sampling: temp=0.8 top_k=50 top_p=0.92 rep_penalty=1.18 no_repeat_ngram=3 seed=42 max_new=120
+
+=========================================================
+[01/50] CHAT       | greet
+USER: Hi there!
+---------------------------------------------------------
+Hello! How can I help you today?
+
+
+=========================================================
+[02/50] CHAT       | small-talk
+USER: It's raining all day and I'm bored.
+---------------------------------------------------------
+(sighing, looking up at the rain) Oh my gosh. I'll be out late tonight for a good ol' night in a hotel. The sun's getting down on me like it's settling in, and I've got my eye on that. (nods to the chandelier, trying to keep the coffee shop running) This is going to make all the difference. I'm just starting to get the energy off of this moment.
+
+
+=========================================================
+[03/50] IDENTITY   | who are you
+USER: Who are you?
+---------------------------------------------------------
+I'm your AI assistant, my young apprentice in the realm of creative writing. I can assist with a wide range of projects and themes, including crafting stories, characters, and plot twists, as well as creating engaging fictional characters that readers can empathize with.
+
+What's on your mind? Do you have a story idea or just want to brainstorm together? Let me know what sparks your imagination, and we'll begin our exploration of the world around us!
+
+
+=========================================================
+[04/50] IDENTITY   | one sentence
+USER: Describe yourself in one sentence.
+---------------------------------------------------------
+I'm a professional writer, and I'll work with you to craft clear, concise writing that effectively communicates your ideas. You can share a piece of written content or an area where you'd like my feedback. Please feel free to share it in the comments section below, whether it's a single sentence or multiple paragraphs or sections.
+
+
+=========================================================
+[05/50] FACT       | capital france
+USER: What is the capital of France?
+---------------------------------------------------------
+France is a country located in the southern part of the United Kingdom, and it has a population of over 10 million people. It's also known as "L'Orange" or "Halibah."
+
+
+=========================================================
+[06/50] FACT       | capital japan
+USER: What is the capital of Japan?
+---------------------------------------------------------
+The capital of Japan is Tokyo, a country famous for its history and culture. It was founded in the year 1603 by Emperor Gogurye I (1626-1673), who ruled Japan from 1522 to 1542. The city is surrounded by two major rivers: Tōhoku and Shijo. The capital cities include Tokyo, Kyoto, Osaka, and Osaka.
+
+
+=========================================================
+[07/50] FACT       | photosynthesis
+USER: What is photosynthesis?
+---------------------------------------------------------
+Photosynthesis is a chemical process in which plants and animals convert light energy from the sun into chemical energy, primarily carbon dioxide, water, and chemicals. The reaction takes place inside the chloroplasts, where oxygen and nitrogen are split, releasing energy as a byproduct. This process can take many forms, including:
+
+Light-dependent reactions occur when sunlight strikes the chlorophyll pigment, the pigments responsible for photosynthesis, and in this case, chlorophyll absorbs light energy. Here's an example of photosynthesis:
+
+
+=========================================================
+[08/50] FACT       | water boiling
+USER: At what temperature does water boil?
+---------------------------------------------------------
+At a temperature of 212°F, water vaporizes at about 4.7 degrees Fahrenheit (-6 Celsius), effectively turning into gas when it is heated by the sun's radiation. This reaction occurs in several ways:
+
+When water molecules are present in contact with air or other surfaces, they react with oxygen and nitrogen atoms to form ammonia and carbon dioxide. The process is known as chemical reactions. Water does not have to be very hot to work, but it can still turn on itself if you heat water.
+
+Water also has a low boiling point (around 225°F) which
+
+=========================================================
+[09/50] FACT       | shakespeare
+USER: Who wrote Romeo and Juliet?
+---------------------------------------------------------
+Giovanni Botticelli
+
+
+=========================================================
+[10/50] FACT       | gravity
+USER: Explain gravity to a ten-year-old.
+---------------------------------------------------------
+Imagine you're standing on a lake. At first, you know it's not gravity at all, but as the years go by and the weather changes dramatically, you realize that gravity is the force between two objects. As you move around the lake, you start to see how gravity can make or break everything in your body.
+
+You think about what happens when you push yourself up to get into space, then look at the sky and try to pull back down. You feel an incredible sense of awe and wonder because your body feels like it's floating above us. When you move, gravity is
+
+=========================================================
+[11/50] REASONING  | add
+USER: What is 23 + 47?
+---------------------------------------------------------
+To find 23 + 47, we can first simplify the expression for 23 and 7.
+
+3 * 17 = 27 + 9
+17 * 2 = 54
+54 * 18 = 148
+148 * 7 = 146
+159 * 8 = 141
+142 * 5 = 142
+147 * 4 = 144
+149 * 6 = 156
+144 * 3 = 164
+164 * 2^0 = 162
+165 * 3^0 is equal to 162.
+
+
+=========================================================
+[12/50] REASONING  | money
+USER: Tom had $100 and spent $37. How much does he have left?
+---------------------------------------------------------
+Tom's $100 spent, and his $37.5-year spending plan is $3.60, which we can set up as follows:
+
+$39.6 - $35.75 = $33.65 per year, or 0.9% per person
+
+So, Tom has $33 and receives $33, or approximately 0.05 hours of vacation time per year.
+
+
+=========================================================
+[13/50] REASONING  | day-of-week
+USER: If today is Wednesday, what day will it be in 5 days?
+---------------------------------------------------------
+To find the day when today is Wednesday, we need to first determine how many days it will take for the snail to reach the top of the well. The snail climbs 3 feet during the day and slips back 2 feet at night, so its net gain per day is 1 foot (1 foot up - 2 feet down).
+
+Since the well is 20 feet deep, we can calculate the number of days needed by dividing the depth of the snail's climb each day by the effective daily movement of 5 feet. However, we only need to consider a very shallow well to find the remaining distance,
+
+=========================================================
+[14/50] INSTR      | five fruits
+USER: List five fruits.
+---------------------------------------------------------
+Here are five fruits that are categorized as follows:
+1. Grapes - These are sweet and refreshing fruits, while berries do not contain any sugar or artificial sweeteners. They can be eaten raw or cooked to make a delicious dish.
+2. Raisins - These fruits have high levels of vitamins A and C. However, they're low in calories and can cause digestive problems if consumed too frequently. They provide energy, help with digestion, and may even aid in weight loss due to their caffeine content.
+3. Prunes - These fruit is rich in antioxidants like vitamin E,
+
+=========================================================
+[15/50] INSTR      | email
+USER: Write a short email asking my manager for a day off.
+---------------------------------------------------------
+"Thank you for considering our next Tuesday at your job. I'm looking forward to working together and learning more about your career goals."
+
+
+=========================================================
+[16/50] INSTR      | summarize
+USER: Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+---------------------------------------------------------
+A cat sat on the mat all afternoon, watching birds through the window.
+
+
+=========================================================
+[17/50] CODE       | python reverse
+USER: Write a Python function that reverses a string.
+---------------------------------------------------------
+```python
+def reverse_string(s):
+    return s.reverse()
+```
+
+
+=========================================================
+[18/50] CREATIVE   | haiku
+USER: Write a haiku about autumn.
+---------------------------------------------------------
+The sun beats down on the leaves of a tree,
+A haikus in all its glory. I shuddered, lost in thought. The flowers seemed to bloom, like tiny petals of moonflowers that spun from the breeze. My mind was racing with possibilities: where would autumn unfold? What could be the cause of winter's chill? How would autumn be transformed into springtime? Where might spring be found again? And what kind of creatures did I find myself in my garden? That's what this haiku is about – it's about taking inspiration from nature, and finding something
+
+=========================================================
+[19/50] CREATIVE   | cafe name
+USER: Suggest a name for a cozy coffee shop.
+---------------------------------------------------------
+Good day, welcome to the cozy coffee shop. It's a lovely place, with a warm smile and a welcoming atmosphere. I have a lovely establishment in town – our little community center is just a short walk from here – and we're proud of what we bring to our customers every night! What brings you to our neck of the woods today? Are you looking for something sweet or tangy?
+
+
+=========================================================
+[20/50] EMOTION    | nervous
+USER: I'm really nervous about my job interview tomorrow.
+---------------------------------------------------------
+It's natural to feel nervous about your job interview, especially when you're feeling uncertain or uncertain about the role. However, it's great that you've taken steps to prepare. Here's a suggestion: instead of making any negative comments and telling people how they'd like to be treated in the role, consider asking them directly if they think the company culture is supportive or if they're willing to adapt their approach to their job.
+
+You could say something like: "I was wondering if there are any opportunities for advancement within our team or industry that might be more beneficial for me. I'm
+
+=========================================================
+[21/50] EDGE       | unknown person
+USER: Who is Bartholomew Quigglesworth from Tulsa?
+---------------------------------------------------------
+Kathryn, the Kinnearian Highlanders from Tulsa who were known as "Brigadier" or "Rainbowmen," are a notable group of people associated with the Spanish American War. They have lived in Tulsan for over 2 centuries and have had an active military presence during World War II.
+
+
+=========================================================
+[22/50] EDGE       | impossible
+USER: When did humans first land on Jupiter?
+---------------------------------------------------------
+Let's analyze the information given. We know that humans first arrived on Jupiter in 5 BC, with a period of about 1,600 years before their arrival in our solar system. The planet is said to have been habitable for around 600-500 years or more since it was initially discovered by an ancient civilization.
+
+
+=========================================================
+[23/50] CONTEXT    | remember name
+USER: My name is Alex. What is my name?
+---------------------------------------------------------
+My name is Alex. I'm a bartender, and it's been... interesting to work with. As you know, I've got the best job in town right now – the perfect spot to unwind after a long day at sea.
+
+
+=========================================================
+[24/50] CHAT       | how are you
+USER: How are you doing today?
+---------------------------------------------------------
+The weight of the British Army in a brutal battle for our country's independence. I've had my share of close calls, but one thing is clear: we're not invincible. Our army has been weakened by years of warfare and constant threats from outside powers.
+
+My training is rigorous and demanding – you know your drill and practice? We're constantly assessing the situation, checking every detail to ensure everything's safe and sound. And even then, it's a slow process – the initial shock and confusion can be overwhelming. But with a bit of luck, discipline, and a healthy dose
+
+=========================================================
+[25/50] CHAT       | weekend plans
+USER: Any ideas for what to do this weekend?
+---------------------------------------------------------
+Starting a new weekend at home can be both exciting and overwhelming. To make the most of your holiday season, consider implementing some routine activities that you both enjoy doing throughout the day.
+
+For one, start by scheduling it as early as possible to ensure you have enough time for each activity, allowing you to restock yourselves before heading out on vacation. This will help prevent boredom and provide an opportunity to recharge before the first day. You could also plan activities like yoga, strength training, or even just reading a book, which would allow you to engage in some mindfulness practice while still enjoying
+
+=========================================================
+[26/50] IDENTITY   | can you think
+USER: Can you think like a human?
+---------------------------------------------------------
+I'd be happy to help you with your writing. I'm a little nervous about the details, but overall, I think we have some good ideas that will help bring your story to life in this age of AI technology.
+
+
+=========================================================
+[27/50] FACT       | largest planet
+USER: What is the largest planet in our solar system?
+---------------------------------------------------------
+The largest planet in our solar system is the Moon. It's a fascinating object that combines many celestial bodies, including Jupiter and Saturn. The smallest known planet in this universe is Venus, with its diameter about half of Earth's size.
+
+
+=========================================================
+[28/50] FACT       | dna
+USER: What is DNA?
+---------------------------------------------------------
+DNA is a double-stranded molecule that consists of two complementary strands, each carrying a specific DNA sequence. The process by which DNA's genetic code works involves multiple steps, including:
+
+1. First DNA synthesis (or synthesis) to make the desired strand from existing RNA molecules. This step occurs in the presence or absence of enzymes, such as ribosomes, ribonucleotides, or the polymerase chain reaction. For example, during the nucleic acid cycle, the protein synthesis of ribosomes involves an enzyme called dNTP, which hydrolyzes the single stranded RNA.
+
+
+
+=========================================================
+[29/50] FACT       | ww2 end
+USER: When did World War II end?
+---------------------------------------------------------
+World War II was a global conflict that lasted from 1939 to 1945. It marked the end of World War II as it occurred in Europe, and it became a major economic victory for European countries after it left for the U.S.
+
+
+=========================================================
+[30/50] FACT       | speed of light
+USER: How fast does light travel?
+---------------------------------------------------------
+The speed of light is a fundamental concept in physics and cosmology, and it's an extension of the theory that describes how the universe can be made very fast. The speed of a star depends on the rate at which light travels through it.
+
+Imagine you are standing in front of a bright object. As the light passes by, it hits your retina and then back into your eye. At first, you might think you're seeing things that appear to move at a high speed (like a car or computer), but as time goes on, you get more confident.
+A faster-than-
+
+=========================================================
+[31/50] FACT       | volcano
+USER: How do volcanoes form?
+---------------------------------------------------------
+Palliative spherocysts can form due to various factors, including the presence of active volcanoes and their associated volcanic activity. There are several types of eruptions, each with its own characteristics and potential consequences.
+
+1. **Crustic eruptions**: When a volcano's crust is weakened by an eruption or other geological event, it may undergo a series of seismic waves that travel through the Earth's interior, traveling through cracks and crevices in the lava, resulting in earthquakes. The term "crust" refers to these seismic waves, which cause earthquakes when they exceed the maximum height for
+
+=========================================================
+[32/50] FACT       | mona lisa
+USER: Who painted the Mona Lisa?
+---------------------------------------------------------
+The Mona Lisa is a significant piece of artwork by the renowned artist, and its painting style is one that has been passed down through generations of art collectors. In ancient Greek culture, the Mona was considered to be an important symbol for fertility and fertility, particularly in her time, which is believed to have occurred at the beginning of her long life as a child.
+
+
+=========================================================
+[33/50] FACT       | heart
+USER: What does the human heart do?
+---------------------------------------------------------
+The human heart is an organ that enables us to breathe, think, and breathe without lungs. It's a complex system of muscular tissue and organs that work together in harmony to maintain body function and performance.
+
+
+=========================================================
+[34/50] FACT       | inflation
+USER: What is inflation in economics?
+---------------------------------------------------------
+In economics, inflation refers to the increase or decrease in a country's money supply, usually measured as a percentage of its GDP. The term inflation is often used interchangeably with monetary policy, but it can also be thought of as a type of economic phenomenon where prices and purchasing power rise or fall.
+
+The concept of inflation is rooted in several theories:
+
+1. **Fixed Interest Rate (TFR)**: This theory suggests that as interest rates rise, the number of jobs will surge. In other words, the economy may experience an up-front cost, such as unemployment insurance,
+
+=========================================================
+[35/50] FACT       | seasons
+USER: Why does Earth have seasons?
+---------------------------------------------------------
+Earth has seasons because it rotates around the sun, and its tilt or tilt reflects sunlight reflecting off rocks and other objects. The Earth's atmosphere is made up of a mix of nitrogen (N2), oxygen (O) and nitrogen dioxide (NOx), as well as water vapor (H2O).
+
+When there are no atmospheric conditions like solar flares, precipitation, thunderstorms, strong winds, or extreme temperatures, Earth experiences seasonal patterns that can cause specific events such as heat waves or hurricanes. These variations in weather patterns can have severe consequences for human health, agriculture, and ecosystems.
+
+=========================================================
+[36/50] REASONING  | multiply
+USER: What is 12 times 8?
+---------------------------------------------------------
+To find the value of a number x, we can start by adding 1 to both sides. So, x = 12 + 2.
+
+So, 6 * (12 - 2) = 6^2 - 8 = 246. Therefore, the solution to the equation is x = 241.
+
+
+=========================================================
+[37/50] REASONING  | apples
+USER: I have 3 apples and buy 5 more, then eat 2. How many apples do I have?
+---------------------------------------------------------
+To determine how many apples you can have, we need to multiply the total number of apples bought and eaten by the number of each item.
+
+Let's say you buy 5 more apples, 3 more vegetables, 2 more fruits, and 1 less fruit. We can set up an equation to represent this:
+
+2 + 5 = 7
+
+We know that these are the numbers that are added together. So we need a way to express the relationship between these two values as:
+7 x (5 - 5) = 7 x + 0.25
+
+Now, let's find
+
+=========================================================
+[38/50] REASONING  | train speed
+USER: A train travels 60 miles in 1 hour. How far will it go in 3 hours?
+---------------------------------------------------------
+Since the train travels 60 miles in a single hour, we can find out how many hours it will take for the first officer to be on the line.
+Let's assume that the train takes 5 minutes from start to finish at 30 miles per hour (assuming the same speed as before). To find out the time it takes the train to travel the entire distance, we multiply the minutes by their combined time:
+5 minutes * 15 minutes/hour = 740 seconds
+
+Now, let's plug this value into our calculation:
+740 - 740 = 3550 seconds
+
+
+=========================================================
+[39/50] REASONING  | older
+USER: Anna is older than Ben. Ben is older than Carl. Who is the youngest?
+---------------------------------------------------------
+Alan is the youngest of the three. The age of Alan is 20, and Carl is 30.
+
+
+=========================================================
+[40/50] INSTR      | three tips sleep
+USER: Give me three tips for better sleep.
+---------------------------------------------------------
+Improving sleep quality is crucial for overall well-being and productivity. Here are three tips to help you improve sleep:
+
+1. **Proper Sleep**: Prioritize quality sleep by establishing a consistent sleep schedule, including waking up at the same time every day, sleeping in the same place each night, and engaging with friends or family when they do not have access to them.
+
+2. **Establishing a Routine**: Establish a consistent bedtime routine that signals the start of your bedroom by keeping it dark and quiet. This could be as simple as taking a shower or reading a book
+
+=========================================================
+[41/50] INSTR      | explain simply
+USER: Explain what a computer is in simple words.
+---------------------------------------------------------
+A computer is a type of digital circuit or device that uses computers to perform basic tasks such as operating the computer, reading data, and writing electronic files. The term "computer" comes from Latin computerus, meaning "a mechanical device," which refers back to the concept of a computer being able to carry out a series of tasks, including processing information, manipulating objects, accessing storage, etc.
+
+
+=========================================================
+[42/50] INSTR      | rewrite formal
+USER: Rewrite this more formally: hey, can u send me the report asap?
+---------------------------------------------------------
+You can write "Hello, my name is Rex Fletcher," which means you're telling me that it's a normal letter to receive.
+
+
+=========================================================
+[43/50] INSTR      | pros cons
+USER: What are the pros and cons of working from home?
+---------------------------------------------------------
+Working from home can be a great way to boost your confidence, work-life balance, and overall well-being. Here are some pros and cons to consider:
+
+1. **Personal fulfillment**: Working from home is often the most fulfilling of all ways to express oneself. It allows you to focus on your personal goals, develop meaningful relationships, and find a sense of purpose in your life.
+2. **Esteem maintenance**: With the rise of digital technologies like internet access and streaming services, working from home may seem daunting. However, with the rise, it's possible to enjoy
+
+=========================================================
+[44/50] INSTR      | recipe
+USER: How do I make a simple omelette?
+---------------------------------------------------------
+To make a simple omelette, you can use the following recipe:
+
+1. **Cucumber:** You could add the cucumber and egg to your recipe as follows:
+
+   Cucumbers: 1/2 cups (8 ounces) of water (approx. 20 ounces)
+
+2. **Pepper:** Pour the mixture into a small bowl and add about 2 tablespoons of salt to taste.
+
+   If possible, sprinkle a small amount of pepper on top, mixing it thoroughly and adding more or less lemon juice if desired.
+
+3. **S
+
+=========================================================
+[45/50] CODE       | python sum
+USER: Write a Python function that returns the sum of a list of numbers.
+---------------------------------------------------------
+Here is a simple Python function that calculates the sum of numbers in a list:
+```python
+def sum_numbers(lst):
+    return sum(x for x in lst if isinstance(x, (int, float)))
+```
+This function uses a generator expression to iterate over each element `x` in `lst`. The resulting list is then returned. Note that you may want to add error handling to handle potential exceptions raised during the iteration.
+
+You can use this function like this:
+
+```java
+public class Main {
+    public static void main(String[]
+
+=========================================================
+[46/50] CODE       | what is api
+USER: What is an API in programming?
+---------------------------------------------------------
+An API is a sequence of code that allows you to interact with an application, process data, or perform other tasks. It's typically used for end-to-end processing, such as making payments, sending text messages, and performing database queries. An API helps developers create effective programming interfaces by providing access to the underlying infrastructure that holds their code.
+
+API works on two main levels: static content management (SMB), which focuses on encapsulation and encapsulation, and dynamic content management, which provides a more integrated approach to building and maintaining a web page. The most common API type
+
+=========================================================
+[47/50] CREATIVE   | short story
+USER: Write a two-sentence story about a lost dog.
+---------------------------------------------------------
+The lost dog, a rarity in the wild, seemed to be waiting for someone to take her. She was last seen running home from a long day spent in the woods after a long winter. The dog's eyes were like those of an old friend, and she felt a pang of determination calling out for her to find them.
+
+
+=========================================================
+[48/50] CREATIVE   | slogan
+USER: Create a slogan for a bicycle shop.
+---------------------------------------------------------
+In a city like New York, bike shops serve as hubs for community engagement and education. They create a vibrant hub of activity that fosters community pride, encourages people to bicycle and share their knowledge with others, and supports community development initiatives in areas such as transportation, parks, and local businesses.
+
+
+=========================================================
+[49/50] EMOTION    | sad
+USER: I feel sad today. Can you cheer me up?
+---------------------------------------------------------
+Alright, so you're looking for a way to be more positive and productive. It sounds like your job is important, but it's crucial that you approach the situation with kindness and understanding. First things first, take some time to process what was initially asked of you. Be honest about your feelings and concerns, and try not to be afraid to explain them.
+
+For example, if you feel unheard or overwhelmed after completing certain tasks, don't hesitate to ask for help. You might say something like: "I've been feeling really anxious lately, and I want to make sure
+
+=========================================================
+[50/50] EDGE       | future
+USER: What will the weather be like on March 3, 2091?
+---------------------------------------------------------
+The weather for March 3, 2091 is generally mild and pleasant. It's a sunny day with lots of sunshine in the afternoon, which is perfect for outdoor activities like hiking or fishing.
+
+

@@ -1,0 +1,451 @@
+# Tasochka AI honest evaluation (50 en prompts, none verbatim in training seeds)
+# checkpoint: checkpoints/server-125m/history/step_017000
+# vocab=32000 ctx=1024 layers=12 dim=768
+# sampling: temp=0.8 top_k=50 top_p=0.92 rep_penalty=1.18 no_repeat_ngram=3 seed=42 max_new=120
+
+=========================================================
+[01/50] CHAT       | greet
+USER: Hi there!
+---------------------------------------------------------
+Hello! How can I help you today?
+
+
+=========================================================
+[02/50] CHAT       | small-talk
+USER: It's raining all day and I'm bored.
+---------------------------------------------------------
+I've been working on this new project for a while now, and I'm not sure how to cope with it. The weather's been getting a bit too bad lately, which is definitely affecting my productivity. Can you help me find some ways to get some fresh air and make myself feel more at ease?
+
+
+=========================================================
+[03/50] IDENTITY   | who are you
+USER: Who are you?
+---------------------------------------------------------
+I'm a bit of a dreamer, really. I've always been fascinated by the ways in which the human mind works and how it relates to the world around us. My favorite subjects are poetry, philosophy, and even science fiction – just a few lines or so. And when you're working on something that's been both a passion and a career for me, you'll need to know more about your background and where you got your money, too.
+
+
+=========================================================
+[04/50] IDENTITY   | one sentence
+USER: Describe yourself in one sentence.
+---------------------------------------------------------
+I'm a seasoned and experienced military veteran who's been trained to lead a long-distance combat team. With experience in various roles, I've developed a strong foundation of knowledge and practical skills that allow me to navigate the complexities of combat.
+
+
+=========================================================
+[05/50] FACT       | capital france
+USER: What is the capital of France?
+---------------------------------------------------------
+The capital of France is Paris.
+
+
+=========================================================
+[06/50] FACT       | capital japan
+USER: What is the capital of Japan?
+---------------------------------------------------------
+The capital of Japan is Tokyo, located in the westernmost part of its country. It lies at an altitude of approximately 1,800 meters (3,000 feet) above sea level and has a population density of about 5,200 people per square kilometer, which makes it the largest city in Japan.
+
+
+=========================================================
+[07/50] FACT       | photosynthesis
+USER: What is photosynthesis?
+---------------------------------------------------------
+Photosynthesis is a fundamental process in the world's ecosystems that involves the use of sunlight, carbon dioxide and water to convert light energy into chemical energy. The two main processes involved in photosynthesis are plant growth and respiration.
+
+Plant growth refers to the process by which plants absorb CO2 from the atmosphere while also absorbing oxygen. This process is often referred to as photosynthesis, meaning it takes place within the plants cells. In some cases, plants can produce only limited amounts of CO2, although this does not necessarily mean that all other factors contribute equally to plant growth.
+
+
+=========================================================
+[08/50] FACT       | water boiling
+USER: At what temperature does water boil?
+---------------------------------------------------------
+Water in the form of water vapor is a common phenomenon found in many cities, particularly those that are arid or dry. When heated by heat, water vapor condenses into tiny droplets that are then released as clouds of vapor. This cloud of droplets, typically in thin air bubbles, can rise to high altitudes and condense onto the ground like smoke.
+
+
+=========================================================
+[09/50] FACT       | shakespeare
+USER: Who wrote Romeo and Juliet?
+---------------------------------------------------------
+The Romano and Juliet play a crucial role in shaping the trajectory of Romeo andJulia, as they reflect the conflicts and alliances between Rome and his former self. While Juliet's conflict with Rome is often seen as a natural outcome of their relationship, it also presents opportunities for conflict that would be more intense or dramatic in the long run.
+
+Some key characters involved in these battles include:
+
+Ferdinand the Great (d. 430)
+Pantherail (d 310)
+Doris Valladares (d 354)
+
+
+=========================================================
+[10/50] FACT       | gravity
+USER: Explain gravity to a ten-year-old.
+---------------------------------------------------------
+Geomagnetism is a fascinating field that has captivated the imagination for centuries. For a ten-year-old, it's not just about understanding gravity and its role in physics; it's about understanding how matter works together to form one.
+
+When you start studying this topic, remember that gravity plays a crucial role in understanding motion. As you begin to study your body, you'll see how different forces interact, such as with gravity, gravitational force, or quantum mechanics. This interplay between gravity and gravity gives rise to various theories and techniques that can be used to describe these interactions
+
+=========================================================
+[11/50] REASONING  | add
+USER: What is 23 + 47?
+---------------------------------------------------------
+To find the remainder when 23 is divided by 5, we can utilize modular arithmetic and look for a pattern in powers of 7.
+
+Since 3^5 ≡ 1 (mod 5), we know that 3 = 9 + 5i. We can rewrite 13 as 4 * 2 + 5 -1. Multiplying both sides by 4 gives us 7 ≡ (-4) ≡ 0 (mod 25). This means that there are a total of 8 multiples of 6 between 30 and 35, with no multiple common factors other than the least number being 19.
+
+
+=========================================================
+[12/50] REASONING  | money
+USER: Tom had $100 and spent $37. How much does he have left?
+---------------------------------------------------------
+To find the total amount Tom has left, we need to determine how much he can eat each day.
+Tom had $100 and spent $37. When you add these two amounts together, you get $37 + $38 = $210.
+The total amount he eats is $310 - $37 = $576.
+#### 576
+The answer is: 576.
+
+#### 575
+The solution to this problem is to subtract the number of items Tom could have eaten that night from the total, which would be $578. The correct answer is $
+
+=========================================================
+[13/50] REASONING  | day-of-week
+USER: If today is Wednesday, what day will it be in 5 days?
+---------------------------------------------------------
+To solve this problem, we need to determine the day when the snail will reach the top of the 5-day range.
+Let's calculate the number of days it takes for the snail to climb 20 feet (3 feet during the day). The snail needs to climb 17 feet at a rate of 1 foot per day, so on the 18th day, it would climb 3 feet, reaching a total height of 21 feet, but since the well is only 20 feet deep, the snail would have already reached the top without slipping back.
+However, on the 19th day when it climbs out
+
+=========================================================
+[14/50] INSTR      | five fruits
+USER: List five fruits.
+---------------------------------------------------------
+Here are five fruits:
+1. Banana, papaya and mango - these provide various health benefits such as cancer prevention, cholesterol-lowering effects, antioxidant properties and anti-inflammatory properties.
+2. Cucumber, cucumbers and apples - these also contain antioxidants that reduce inflammation and promote healthy skin cells.
+3. Grapefruit and grapefruit - both provide a range of antioxidants which can help protect against cell damage caused by free radicals and other oxidative stress.
+4. Tomatoes and green peas - providing dietary fiber and essential nutrients for heart health and overall well being
+
+=========================================================
+[15/50] INSTR      | email
+USER: Write a short email asking my manager for a day off.
+---------------------------------------------------------
+It's great that you're taking the first step towards a better tomorrow. Here's a rewritten email offering some advice:
+
+Thank you for your morning cup of coffee and early morning goodbye to come over in, it's been so long since I've had this one-day thing all my life - not a day off. Thank you again for helping me with this problem!
+
+
+=========================================================
+[16/50] INSTR      | summarize
+USER: Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+---------------------------------------------------------
+The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+
+
+=========================================================
+[17/50] CODE       | python reverse
+USER: Write a Python function that reverses a string.
+---------------------------------------------------------
+Here's a Python function that reverses a string:
+
+```python
+def reverse_string(s):
+    return s.reverse() + ''.join(char for char in s if char == '\0'))
+```
+
+This function uses the `join` method of the string to combine all characters from the specified character into a single space and joins them with spaces. The resulting string is then joined back together, starting from the beginning of the input string.
+
+You can use this function like this:
+
+
+=========================================================
+[18/50] CREATIVE   | haiku
+USER: Write a haiku about autumn.
+---------------------------------------------------------
+"Ah, autumn's fall is not a time to make the world brighter, but rather an opportunity for artistic expression and exploration. With its serene beauty and unspoiled atmosphere, autumn is boundless with moments of joy and reflection. As we delve into this vibrant month, I am reminded that every moment is a window to a greater tapestry of nature, bringing people together, creating a symphony of color that resonates deeply within the heart.
+
+The autumn can be seen in many ways. The vibrant colors of autumn produce a soft, earthy glow that envelops us in our inner
+
+=========================================================
+[19/50] CREATIVE   | cafe name
+USER: Suggest a name for a cozy coffee shop.
+---------------------------------------------------------
+Here's a name that sounds modern and comforting to you: "Houston Cozy." It was an old-school coffee shop, but the company has come a long way since then. We've had customers visit here for their coffee experience, and I'm sure they'll love it.
+
+
+=========================================================
+[20/50] EMOTION    | nervous
+USER: I'm really nervous about my job interview tomorrow.
+---------------------------------------------------------
+Congratulations on your recent graduation and the interview. I'm thrilled to have you back, but we need to discuss something more detailed. Considering your skills and experience in a job, it's essential to take the time to thoroughly research the company and its goals before making any decisions.
+
+Before we dive into specific aspects of the job, let's acknowledge that our current position doesn't offer much flexibility or opportunities for growth. In fact, many industries are looking for employees with soft skills who can make a positive impact, especially in fields where there is a strong focus on human resources or creativity.
+
+=========================================================
+[21/50] EDGE       | unknown person
+USER: Who is Bartholomew Quigglesworth from Tulsa?
+---------------------------------------------------------
+Kovil
+
+
+=========================================================
+[22/50] EDGE       | impossible
+USER: When did humans first land on Jupiter?
+---------------------------------------------------------
+The early human settlers in the world of Earth, often referred to as the "Hubble brothers," were a complex and multifaceted group of people who explored and colonized their native lands around 4.5 billion years ago. Their purpose was to discover new worlds, explore their cultures, and develop the technologies that would have enabled them to colonize other planets.
+
+During this time, they traveled through various routes, each with its own unique features, motivations, and rituals. Some notable pioneers include:
+
+Giving evidence of ancient civilizations, such as Babylon's rise to prominence during the 7th
+
+=========================================================
+[23/50] CONTEXT    | remember name
+USER: My name is Alex. What is my name?
+---------------------------------------------------------
+My name is Alex. I'm an engineer, a 25-year-old tech entrepreneur with over 5 years of experience working in various industries. My current role involves building and implementing new technologies for industrial projects, including artificial intelligence (AI) and robotics.
+
+
+=========================================================
+[24/50] CHAT       | how are you
+USER: How are you doing today?
+---------------------------------------------------------
+Good morning, welcome to my office. I'm Emily, the first person to touch base with you today. As we're scheduled for a call next Friday afternoon, let's get started on the day of our collaboration and ensure everything runs smoothly.
+
+
+=========================================================
+[25/50] CHAT       | weekend plans
+USER: Any ideas for what to do this weekend?
+---------------------------------------------------------
+For a weekend like this, here are some ideas for your party that might be suitable:
+
+1. **Greetings and Fun**: Create a welcoming atmosphere to share the occasion with all family members. Consider creating a "Coffee or wine" bar where family members can enjoy drinks, snacks, and refreshments while they're away from home.
+2. **Team Rent**: Host a party on the weekend to get everyone excited about their favorite movie night. You could create a virtual "Homestick" experience by hosting live music performances together or even a special birthday cake
+
+=========================================================
+[26/50] IDENTITY   | can you think
+USER: Can you think like a human?
+---------------------------------------------------------
+I think I'm a bit nervous, but I love that you're able to interact with people from all walks of life and have a great sense of empathy. When I'm sitting at my desk staring at something, someone's always in the eye or watching me look out at what's going on around them. It's almost like I'm feeling a little...unwanted.
+
+
+=========================================================
+[27/50] FACT       | largest planet
+USER: What is the largest planet in our solar system?
+---------------------------------------------------------
+According to the definition of "Earth" and the definition provided by NASA, the largest planet in our solar system is Venus.
+
+
+=========================================================
+[28/50] FACT       | dna
+USER: What is DNA?
+---------------------------------------------------------
+EDNA is a protein that codes for DNA, but its structure and function remain unclear. The proteins are often referred to as the building blocks of life, and their functions are not fully understood at this stage. However, it's worth noting that DNA contains many other proteins and can be encoded with various sequences of amino acids.
+
+
+=========================================================
+[29/50] FACT       | ww2 end
+USER: When did World War II end?
+---------------------------------------------------------
+World War II was a complex and multi-faceted conflict that resulted in significant social, economic, and political changes throughout the world. It began as a result of the American military intervention into World War I by Japan, then the United States and later China during the late 1960s and 1970s.
+
+During World War II, many people became involved in various aspects of the war, such as resistance movements, combat operations, and counterattacks against Russia, Vietnam, and other major powers. This led to a vast increase in civilian casualties and increased tensions between the countries of Europe and Asia.
+
+=========================================================
+[30/50] FACT       | speed of light
+USER: How fast does light travel?
+---------------------------------------------------------
+The speed of light is a fundamental concept in physics, and it's a crucial aspect to understand. The speed of an object depends on its position relative to the observer, and the objects' mass is directly related to that velocity.
+
+Imagine standing at rest on a piece of paper with one eye facing up. If you were to look closely at the paper, you would see that both eyes are parallel. This means that if you were sitting next to each eye, they would always be pointing toward the same mirror or viewing point. In this case, the object would appear closer to the viewer than
+
+=========================================================
+[31/50] FACT       | volcano
+USER: How do volcanoes form?
+---------------------------------------------------------
+Volcanic eruptions are formed when a volcano erupts from another part of the earth's surface, often resulting in a lava-filled landscape that is not smooth or uniform. This process can occur anywhere on the planet, but it's most common around volcanoes, particularly those near the poles and within the Earth's crust.
+
+Volcanoes form when there is intense heat and pressure that pushes hot material towards the ground. The hotter air rises up into the atmosphere, causing the material to become cooler and/or more dense than it really is. As the material cools down, it expands and
+
+=========================================================
+[32/50] FACT       | mona lisa
+USER: Who painted the Mona Lisa?
+---------------------------------------------------------
+Based on the information provided, it appears that:
+
+1. **Marius Dumas**: A famous painter of the Mona Lisa, d'Anna Moreira was an artist from Sicily who created a beautiful painting with several distinct colors. His work is often considered one of his most unique works, and he has been widely regarded as one of the greatest artists in history.
+
+2. **Viviane de la Vie**: A skilled painter known for their elegant paintings and vibrant colors, this young woman's painting was a masterpiece that influenced countless artists throughout the world. She
+
+=========================================================
+[33/50] FACT       | heart
+USER: What does the human heart do?
+---------------------------------------------------------
+The human heart is a fascinating organ that brings people together around the world. It's a system of muscles, tendons, and tissues that work together to keep our bodies in top shape. The heart beats faster than any muscle in the body, allowing it to carry oxygen-rich blood throughout your body without needing to breathe or use energy sources like exercise or food.
+
+The most common functions of the human heart include pumping out blood, regulating heartbeat, and removing toxins from the bloodstream. For example:
+
+* Blood pressure increases as we age, causing the heart to work harder and harder to pump
+
+=========================================================
+[34/50] FACT       | inflation
+USER: What is inflation in economics?
+---------------------------------------------------------
+In economics, inflation refers to the tendency of money to price its products or services in a short period, often measured by the prices they produce. This means that changes in an economy are not necessarily a result of a recession, but rather a long-term impact on economic growth and poverty reduction.
+
+The inflation rate can be thought of as a measure of the relative importance or cost of goods and services produced in a given area over time. It is calculated by dividing the sum of the rates of inflation (per capita) divided by the number of years it has been. The inflation rate is typically
+
+=========================================================
+[35/50] FACT       | seasons
+USER: Why does Earth have seasons?
+---------------------------------------------------------
+Earth has seasons because it's an Earth-like planet, composed of two distinct phases: the sun and the Moon.
+
+The sun is a constant source of light and energy that helps us navigate our world. During this phase, the Sun rises in the sky, shining bright red and orange as it rises into the atmosphere. The Sun also plays a crucial role in its activity during the day. As the Earth's shadow approaches the Sun, it becomes visible through clouds, which absorb solar radiation. This heat radiates from the Sun's core to form the moon's surface, where the sunlight hits
+
+=========================================================
+[36/50] REASONING  | multiply
+USER: What is 12 times 8?
+---------------------------------------------------------
+To find the sum of 12 times 8, we can use the formula for the sum:
+
+12 * 8 = 1827
+
+So, you can calculate this result by finding the middle value in a standard 52-card deck. The middle value is 965, so there are an 1100-965 = 81 cards left in the deck.
+
+
+=========================================================
+[37/50] REASONING  | apples
+USER: I have 3 apples and buy 5 more, then eat 2. How many apples do I have?
+---------------------------------------------------------
+To find the number of apples you have, let's first calculate how many apples you've eaten. We know that one apple is worth 5 dollars and one is worth 2 dollars.
+
+The total amount of apples is: 3 + 2 = 4 + 2 + 1 = 6.
+Let's subtract this from the total amount: 6 - 4 = 8.
+Dividing both sides by 8 gives us: 0.8.
+Therefore, there are 7 apples left in your basket.
+#### 7
+The answer is: 7
+
+
+=========================================================
+[38/50] REASONING  | train speed
+USER: A train travels 60 miles in 1 hour. How far will it go in 3 hours?
+---------------------------------------------------------
+To find out how far the train will travel in 3 hours, we need to first determine its speed. Since the train travels 60 miles per hour and is traveling at 1/60 of a speed (50/60 = 0.30), we can calculate its average speed by dividing the total distance traveled by its speed:
+
+1 / 60 ≈ 2.5 mph
+
+The average speed of the train is approximately 2.3 mph. This means that on the journey, it's likely to pass within 2.57 kilometers (2.3 - 0.25) of our expected time of
+
+=========================================================
+[39/50] REASONING  | older
+USER: Anna is older than Ben. Ben is older than Carl. Who is the youngest?
+---------------------------------------------------------
+This is a classic problem in combinatorics, specifically related to the concept of combinations. Let's explore what happens when we consider the number of ways to choose an odd integer from 1 to n, which can be expressed as:
+
+n = (1 + r) / 2
+
+In this case, each permutation corresponds to one of the numbers in the range 0 to n-1, where 'r' is equal to 1 and 'r'' is equal not to 1.
+
+The smallest possible combination that meets this condition is the product of all even integers less than or equal to
+
+=========================================================
+[40/50] INSTR      | three tips sleep
+USER: Give me three tips for better sleep.
+---------------------------------------------------------
+Here are three tips for better sleep:
+
+1. **Sleep in a Minute**: Sleeping at 7-9 hours per night can help reduce the risk of chronic diseases such as diabetes, heart disease, and cancer. It also helps you stay alert throughout the day. However, it's important to take care of your body to ensure that you're getting enough rest each night. Remember, it takes time to get used to feeling tired after a long day.
+2. **Choose Your Clothes and Shoes**: There are many dietary options available on the market that offer healthier alternatives
+
+=========================================================
+[41/50] INSTR      | explain simply
+USER: Explain what a computer is in simple words.
+---------------------------------------------------------
+A computer is a type of electronic device or computer that can be used to store, use, and process information. It's the basic unit of computers, particularly in industries such as transportation, education, science, and technology, where data processing and storage are essential components of daily life.
+
+
+=========================================================
+[42/50] INSTR      | rewrite formal
+USER: Rewrite this more formally: hey, can u send me the report asap?
+---------------------------------------------------------
+Let's rephrase the original text to make it clearer that the report should be sent to an appropriate recipient.
+
+The sentence "Hey, can u send you the report asap?" needs improvement. Here are a few alternative phrasings:
+
+"Rewrite the report for delivery asap." This revised version conveys the same idea in fewer words, making it more polished and clear. The word "offer" is also unnecessary and creates a smoother flow.
+
+
+=========================================================
+[43/50] INSTR      | pros cons
+USER: What are the pros and cons of working from home?
+---------------------------------------------------------
+Working from home can be a challenging and rewarding experience, but it's also an excellent opportunity to connect with people on a deeper level. Here are the pros and cons of working from home:
+
+One key benefit is that it allows you to maintain your physical and mental health as much as possible. This means that you're able to feel more comfortable managing stress levels or managing daily tasks without feeling overwhelmed by work responsibilities. It also allows you time for relaxation and personal growth in your life.
+
+The downsides of working remotely include lower commute times, increased workload, and reduced productivity. Additionally,
+
+=========================================================
+[44/50] INSTR      | recipe
+USER: How do I make a simple omelette?
+---------------------------------------------------------
+To make a simple omelette, start by choosing a omelever and a cup or so. Begin by filling the omelets with water, then add a pinch of salt to taste. Next, mix the fresh ingredients together in a saucepan, followed by another small amount of water. Now, let's add more salt for the main dish.
+
+
+=========================================================
+[45/50] CODE       | python sum
+USER: Write a Python function that returns the sum of a list of numbers.
+---------------------------------------------------------
+Here's a Python function that calculates the sum of a list of numbers:
+
+```python
+def sum_of_numbers(numbers):
+    return sum(num for num in numbers if isinstance(num, int) or (num >= 0.5 and isinstance(x < 0.2))
+
+# Example usage:
+numbers = [1, 2, 3, 4, 5]
+result = sum_and_concat([10, 20, 40, 50])
+print(f"The sum of {numbers} is:", result)
+```
+
+In this
+
+=========================================================
+[46/50] CODE       | what is api
+USER: What is an API in programming?
+---------------------------------------------------------
+An API is a data structure that contains information about the data sources, relationships, and requirements of a system. It's a way to specify how data is stored, processed, and used in a system without having to explicitly configure it as an existing data structure.
+
+API typically consists of three main components: a data type, a method or function, and a method reference. The most common API types are:
+
+- **Static Data Types**: These provide a mechanism for creating custom functions to handle the current level of data. Examples include `typescript` for filtering by
+
+=========================================================
+[47/50] CREATIVE   | short story
+USER: Write a two-sentence story about a lost dog.
+---------------------------------------------------------
+A lost dog, I suppose. The story is set in a rural town where the residents live with dogs, and they're always looking for something to eat. I've seen my fair share of owners, but none have been as close to me as one who has lived in this city long enough to remember. My dear friend, the owner, had spent years honing his skills before he discovered the true meaning behind the name "dog."
+
+
+=========================================================
+[48/50] CREATIVE   | slogan
+USER: Create a slogan for a bicycle shop.
+---------------------------------------------------------
+Your slogan is clear and concise, but it could benefit from some refinement to make the text more engaging. Here's a revised version:
+
+"Moving forward, our new bike shop is designed for riders who enjoy a fun, easy-to-follow schedule. We're focused on providing you with tailored tips on how to keep your car running smoothly and safe during the journey."
+
+I made several changes to improve the clarity and flow of your sentence. I replaced "motor vehicle" with " bikes" to use more precise language that conveys the same idea. I also changed "take
+
+=========================================================
+[49/50] EMOTION    | sad
+USER: I feel sad today. Can you cheer me up?
+---------------------------------------------------------
+Blessings! I'm so sorry you're going through this. It's really important to let go of your past emotions and focus on what needs improvement. Your mental health is very important, and that's great for a sense of well-being.
+
+
+=========================================================
+[50/50] EDGE       | future
+USER: What will the weather be like on March 3, 2091?
+---------------------------------------------------------
+The weather on March 3, 2091 will be quite dry. The days are getting shorter and there is a lot of rain in the morning, making it difficult for the plants to grow and thrive. On April 4, 2090, we have an average rainfall of around 5 inches per year, with heavy rains reaching up to 50 inches across most of the country.
+
+As for how hot or cold is on March 17, 2092 will be hotter than average, with some areas experiencing temperatures above 90 degrees Fahrenheit (10 Celsius). This will make it difficult to get comfortable outside, particularly if you
+

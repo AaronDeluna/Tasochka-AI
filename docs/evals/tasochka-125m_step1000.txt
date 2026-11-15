@@ -1,0 +1,499 @@
+# Tasochka AI honest evaluation (50 en prompts, none verbatim in training seeds)
+# checkpoint: checkpoints/server-125m
+# vocab=32000 ctx=1024 layers=12 dim=768
+# sampling: temp=0.8 top_k=50 top_p=0.92 rep_penalty=1.18 no_repeat_ngram=3 seed=42 max_new=120
+
+=========================================================
+[01/50] CHAT       | greet
+USER: Hi there!
+---------------------------------------------------------
+I'd love to hear you at your friends and I wanted to meet for a call to discuss the article.
+
+Best regards,
+Emily
+</user>
+<assistant>
+Dear Michael,
+
+Dear Dr. Emily,
+I hope this email finds you well. I was excited about your collaboration on the topic. After that session we were using our thoughts on how to improve it with my friend. The author has been reviewing this new review and would support your feedback.
+I was wondering if we could add more details or provide evidence of additional insights on future outcomes. Would you
+
+=========================================================
+[02/50] CHAT       | small-talk
+USER: It's raining all day and I'm bored.
+---------------------------------------------------------
+When you're in a while for my part, I've been looking forward to finding out about what happened. The fact that the event was a great moment of time is indeed the last thing on my life: it's a challenging day.
+
+One of the most significant events I've encountered in this area could be the lack of evidence or information. My colleagues have found that there may have been some major changes that might be causing me. I've seen people who had no idea what had happened after they were made, and now we've got them all over again. This can be especially true
+
+=========================================================
+[03/50] IDENTITY   | who are you
+USER: Who are you?
+---------------------------------------------------------
+Let's analyze the data from this dataset and explore its impact on your research process.
+
+
+=========================================================
+[04/50] IDENTITY   | one sentence
+USER: Describe yourself in one sentence.
+---------------------------------------------------------
+Your response should contain at least 3 sentences. Include keywords [travel, location], and overall audience are the main character of a story.
+
+
+=========================================================
+[05/50] FACT       | capital france
+USER: What is the capital of France?
+---------------------------------------------------------
+To find the capital of France, you can use the built-in money supply chain. In the first quarter of this year, the city's initial budget is $305000.
+
+First, you have a total of 18,000 square feet and an average of 215 million square foot per day. However, your monthly budget (202 million square feet) includes the new cost.
+
+
+=========================================================
+[06/50] FACT       | capital japan
+USER: What is the capital of Japan?
+---------------------------------------------------------
+To do this, I'd like you to break it down into manageable chunks. Can you help me edit the capital that is currently there?
+
+
+=========================================================
+[07/50] FACT       | photosynthesis
+USER: What is photosynthesis?
+---------------------------------------------------------
+Water is a mineral used to produce energy, which can have numerous applications in various areas of life. The process of photosynthesis involves:
+
+- Carbon dioxide: the pH of your skin produces approximately 8.3 mg/d (1.0 mg) of your body's diet each day. This process reduces the acidity of your teeth during the day when it comes to building up for growth.
+
+When you plant and water on an outside-area bed, this process begins by creating some layers around your mouth that break down. A good solution involves using water from hot weather or hot air to
+
+=========================================================
+[08/50] FACT       | water boiling
+USER: At what temperature does water boil?
+---------------------------------------------------------
+A cool environment improves hydration and reduces oxygen consumption.
+Cryptor is a simple and effective way to reduce energy intake in the soil. The use of plant plants as a water solution can help prevent erosion, which could lead to improved ventilation. Here's an example of how you might need a more active or air conditioning system:
+
+The use of a low-carb (S-hockey) filter makes it ideal for a high level of energy. This control measures the amount of time needed to generate heat from the plant that was not being used to treat the disease in this case
+
+=========================================================
+[09/50] FACT       | shakespeare
+USER: Who wrote Romeo and Juliet?
+---------------------------------------------------------
+In the first sentence, I've read the text and added the passage in a more engaging way.
+
+"We have made some strides in this debate."
+
+I changed "The Frenchman," which I've seen for years now. The language is clear, but I think there's something that would make it difficult to follow through this proposal. However, I am curious about what I'd like to do next day:
+
+* What if I'm going to use the phrase "the Dutchman was hoping that the British did not want to give you the same answer?", which could
+
+=========================================================
+[10/50] FACT       | gravity
+USER: Explain gravity to a ten-year-old.
+---------------------------------------------------------
+The answer to this question is "Cultivation and Energy Design."
+
+
+=========================================================
+[11/50] REASONING  | add
+USER: What is 23 + 47?
+---------------------------------------------------------
+To find the remainder of 25 + 34, we need to calculate 2x^2 * (3 × 9) - 7^(2π)^2 / 3(1)/(4).
+
+where:
+- 1 = -2 × 10 ≡ 5 or 6, which is divisible by 2.
+
+So, the remainder when divided by 2 and then multiply by 2 is 18. In this case, our calculation will be 10/2. Since there are only 3 pairs, the ball is 20/2^2 × 11 ≡ 7. This simplifies to a new set of numbers for both
+
+=========================================================
+[12/50] REASONING  | money
+USER: Tom had $100 and spent $37. How much does he have left?
+---------------------------------------------------------
+As a result, I thought it was just that. My friend, Emily, didn't know the cause of their family and friends... they were all the ones with one you'd like them to be. What kind of relationship might you say?
+
+
+=========================================================
+[13/50] REASONING  | day-of-week
+USER: If today is Wednesday, what day will it be in 5 days?
+---------------------------------------------------------
+You are here.
+
+
+=========================================================
+[14/50] INSTR      | five fruits
+USER: List five fruits.
+---------------------------------------------------------
+To implement the plant's unique character, you need to create a sense of what is expected from its natural environment and how it will affect its life cycle. Here are some ideas that should help you determine whether this plant's native plants is healthy or not:
+
+First, choose three varieties for each plant in your world; The first, second, third, fourth, sixth, fifth and seventh-thths, respectively. Identify two cultivars that need to be grown before selecting them in order to get a few days of new plant. Next, place one species within one of your favorite flower plants and
+
+=========================================================
+[15/50] INSTR      | email
+USER: Write a short email asking my manager for a day off.
+---------------------------------------------------------
+I'd be happy to provide you with a few ideas for your help and suggestions.
+
+A good friend will be welcome, as it may seem like they're not willing to leave me alone in the future.
+
+
+=========================================================
+[16/50] INSTR      | summarize
+USER: Summarize in one sentence: The cat sat on the mat all afternoon, watching birds through the window and ignoring everyone.
+---------------------------------------------------------
+In the first sentence, the cat has a positive response in mind and has been tested with dogs that have both sides of their toes. However, it's also worth noting that a cat has multiple legs and legs to face, but this isn't necessarily true. By carefully considering the cat's behavior, you can effectively minimize contact between the host, the dog's performance, and the pets' ability to survive and grow.
+
+
+=========================================================
+[17/50] CODE       | python reverse
+USER: Write a Python function that reverses a string.
+---------------------------------------------------------
+To implement this function to remove a string from the input file, you can use the `isinstance` operator from the `get-down` parameter and an `find-down`.
+
+Here's an example:
+```python
+def sort_dict(arr):
+    left, right = 0.0;
+        for i, 1:
+            left += right - 1;
+            left;
+
+        if not mid == 0:
+            return -1;
+
+    return mid;
+    while (left) > 2;
+    return mid * 3;
+    left <= mid[2];
+}
+
+=========================================================
+[18/50] CREATIVE   | haiku
+USER: Write a haiku about autumn.
+---------------------------------------------------------
+The ancient Greek Greek word "nasa" refers to the word "thao," which means "kwan," meaning "in winter."
+
+
+=========================================================
+[19/50] CREATIVE   | cafe name
+USER: Suggest a name for a cozy coffee shop.
+---------------------------------------------------------
+The following message is sent to the U.S. Army of France, France:
+"A cozy coffee shop with a wide range of different dishes and restaurants has been shown to be a significant part of my life. The price of these products is enormous," the newspaper says. "We're looking for a way to make our cars more affordable to customers."
+
+
+=========================================================
+[20/50] EMOTION    | nervous
+USER: I'm really nervous about my job interview tomorrow.
+---------------------------------------------------------
+I'm sorry I can't see how I've been working in this conversation. Please let me know if you'd be interested to explore further and make significant changes in the future.
+
+
+=========================================================
+[21/50] EDGE       | unknown person
+USER: Who is Bartholomew Quigglesworth from Tulsa?
+---------------------------------------------------------
+Harran the story of Mario and her son,
+I am the mother of Villa Lippini, a man from Villa Argias.
+
+Magelina (Possessive) is a great friend in Ecolhata, whose young daughter I was there before he died from Tulsa. She lived on the island of Vida and was quite famous for his presence at the time, but she still had to live with him. She has been living there due to the discovery of Aei's family, and her life after the death of this
+
+=========================================================
+[22/50] EDGE       | impossible
+USER: When did humans first land on Jupiter?
+---------------------------------------------------------
+With the sun on Mars, astronauts have been exposed to a wide array of technologies. They are now developing new opportunities for robots and other types of robots that could be used in various ways to connect them.
+
+In this scenario, it's possible that Earth would go undetected with humans in space and space without human intervention. The team is expected to launch at least one mission last year that will be designed to do so.
+
+
+=========================================================
+[23/50] CONTEXT    | remember name
+USER: My name is Alex. What is my name?
+---------------------------------------------------------
+Hey Sarah,
+
+I hope you're doing well! I've been tasked with helping my students develop a more effective learning environment. Could you help me refine their skills and expertise? I'm committed to exploring our work on this new technology concept. What's the first opportunity you'd like to explore my interests? I need to focus on developing a strong foundation for innovation in this field.
+
+#Teaching #Learning #Reading #StudentSolve-Based Learning #Research
+
+
+=========================================================
+[24/50] CHAT       | how are you
+USER: How are you doing today?
+---------------------------------------------------------
+(Note that you have a question with the main character of your story)
+
+
+=========================================================
+[25/50] CHAT       | weekend plans
+USER: Any ideas for what to do this weekend?
+---------------------------------------------------------
+To make a more informed decision, you can break down the task into manageable chunks and identify potential ideas that will be used to achieve these goals.
+
+First, let's explore key factors such as your initial thoughts on the idea of continuing the plan. Are there any specific tasks or challenges that may impact their actions? Will they have some of the necessary adjustments, or would you like them to take on further action? By being willing to prioritize this step, you'll effectively understand how they might affect their actions and the situation.
+
+
+=========================================================
+[26/50] IDENTITY   | can you think
+USER: Can you think like a human?
+---------------------------------------------------------
+The way you're looking for a future in economic growth is, and your answer depends on the specific needs of the individual. Here's what you could do to help you decide which job aligns with your goals.
+
+
+=========================================================
+[27/50] FACT       | largest planet
+USER: What is the largest planet in our solar system?
+---------------------------------------------------------
+The smallest planet in our solar system is the largest of a solar system, which uses a combination of renewable energy sources and other resources. The atmosphere is also called the "Crisficicle." This means that most of your Solar System plants are less than 100%.
+
+In fact, since we all have the power to generate electricity from the sun's energy levels for the wind:
+
+1. We use an electric car with solar panels, such as the H2O in the heating grid or the heat heater.
+2. Since it's not possible for the grid to be able
+
+=========================================================
+[28/50] FACT       | dna
+USER: What is DNA?
+---------------------------------------------------------
+I'd like you to provide me with a simple explanation of what gene is causing.
+
+
+=========================================================
+[29/50] FACT       | ww2 end
+USER: When did World War II end?
+---------------------------------------------------------
+The war was a disaster that took several years ago. The first battle for the U.S. Army, which were killed by an earthquake in 2007 after the war's worst.
+
+On the other hand, the United States had not yet been displaced or it did not take the last attempt to escape. But this could have never been made any decisions about how long it would have occurred:
+
+The attack on the Gulf of Mexico, then known as "Iraq", would be expected to end if the strike on its own. The U.N. could have started a devastating disaster with
+
+=========================================================
+[30/50] FACT       | speed of light
+USER: How fast does light travel?
+---------------------------------------------------------
+To solve the problem, let's break down its response. One possible approach is to use the switch "thick" with the light travel from the sun and then use the other input that goes back to the sun or the light to go.
+
+Next, we can write a test that is the only one of this course:
+
+```python
+import the class as pd
+
+class IO:
+    def __init__(self):
+        self.head = 0, len(k) - 1,
+        return (f"Hello World # I Can’t Help You Need To
+
+=========================================================
+[31/50] FACT       | volcano
+USER: How do volcanoes form?
+---------------------------------------------------------
+A volcano in the world, it's known that a massive explosion and explosion has occurred before. The atmosphere is formed by volcanic eruptions like lava waves, methane particles, or atmospheric gases, which are potentially causing the problem of earthquakes.
+
+The tsunami's impact on glaciers are significant, but the climate crisis can be a difficult process, especially when the tsunami is triggered by hurricanes. However, as weather events become more vulnerable, they may occur due to their potential for growth and development (the study was published in 2007).
+
+During the earthquake event, the storm has been spread rapidly since then,
+
+=========================================================
+[32/50] FACT       | mona lisa
+USER: Who painted the Mona Lisa?
+---------------------------------------------------------
+To make this a compelling character, consider the following themes:
+
+1. **Internal characters**: How do they identify others with different personalities?
+2. **Time-saving stories**: What kind of events do you want to create? This will help readers develop deeper insights about their world and culture.
+
+**Replacements:**
+
+* Use social media platforms or apps like "You're in" or "As a child," which can be helpful for readers who are interested in studying themselves.
+* Using sensory details (e.g., "How did your past experience change
+
+=========================================================
+[33/50] FACT       | heart
+USER: What does the human heart do?
+---------------------------------------------------------
+The human heart is a condition of growth.
+
+A blood vessel, where a person may have a heart attack or an artery pump, takes the urine and tissues to get back into a cell or cause complications from cardiac arrest.
+
+
+=========================================================
+[34/50] FACT       | inflation
+USER: What is inflation in economics?
+---------------------------------------------------------
+The unemployment in economics is a problem in the economy. It involves the lack of debt, such as economic development and income losses.
+
+In conclusion, inflation is a big business industry, which has a very high rate of financial costs, including retirement expenses. The prices are higher due to a decrease in return for the amount of money it needs. The economy tends to be lower than this at all times, but the industry does not have enough revenue or revenues to earn a higher rate.
+
+
+=========================================================
+[35/50] FACT       | seasons
+USER: Why does Earth have seasons?
+---------------------------------------------------------
+The atmosphere has a warm, dry weather and its roots have a significant effect on the environment's climate. The weather is high and there are no other conditions to do. In contrast, sea levels tend to continue rising during peak periods.
+
+A cold winters and humid climates require warmer temperatures due to air temperature changes. For example, they often experience a more severe drought in summer. This type of climate may be caused by the heat it travels faster or slower than this before starting off. A storm or snowfall could also lead to a reduced amount of energy and improved air circulation.
+
+
+=========================================================
+[36/50] REASONING  | multiply
+USER: What is 12 times 8?
+---------------------------------------------------------
+To find the numbers 7 times 8, we can use the following strategies:
+1. Define the number of squares in each row to get 2 1/2, and then use the square root formula:
+
+1) Calculate the sum of squares between two sides of the pair:
+3 + 6 + 7 + 9 - 10 = 20 + 17 + 19 + 12 + 13 + 18 + 16 + 21 + 14 + 17 = 25 + 11 + 11
+
+where |10| is the remainder of the number when divided by a total of three digits|^n * (24+
+
+=========================================================
+[37/50] REASONING  | apples
+USER: I have 3 apples and buy 5 more, then eat 2. How many apples do I have?
+---------------------------------------------------------
+To find the number of apples and add up to you, let's calculate the total number of oranges, which is 20.
+
+Since we all have the snail's original numbers, the total total number can be 18 + 1/2^3 ≡ 1 or 1 modulo 1. Since we only need 2 to get a net change in terms of the number number.
+
+
+=========================================================
+[38/50] REASONING  | train speed
+USER: A train travels 60 miles in 1 hour. How far will it go in 3 hours?
+---------------------------------------------------------
+To do so, we need to take a walk along the way. Since it takes 1 hour of training and a train is set up for 6 hours at night, the initial day will be at 19:30-24
+
+
+=========================================================
+[39/50] REASONING  | older
+USER: Anna is older than Ben. Ben is older than Carl. Who is the youngest?
+---------------------------------------------------------
+A 1. In a 3-year-old well. The third is older than Henry. What can be said about this new year?
+
+
+=========================================================
+[40/50] INSTR      | three tips sleep
+USER: Give me three tips for better sleep.
+---------------------------------------------------------
+It's great to start by thinking about this one. Start with a few key things:
+- Take care of yourself. Don't let the other two kids come together and work on this one for better sleep. Keep them up during bedtime, not just sleeping but in the morning.
+
+First, ask yourself if they have any questions or concerns. If you're unsure about their new way, ask your team to show us what is right for you. Try to take time off from bed when you feel warm and happy.
+Next, think about what you might expect in the room, what
+
+=========================================================
+[41/50] INSTR      | explain simply
+USER: Explain what a computer is in simple words.
+---------------------------------------------------------
+A computer is in the process of solving problems using simple phrases, such as "finger", "civilizing") and "to make." Here are some common examples:
+
+1. **Excerate**: This involves checking out a number of questions, including question-based instructions, arguments, or logical rules. You can use this technique to modify information about any objects you're going with (e.g., an object like an object) or by typing them together. For example, if you have a user's name, how many letters would you do in the last few months?
+
+=========================================================
+[42/50] INSTR      | rewrite formal
+USER: Rewrite this more formally: hey, can u send me the report asap?
+---------------------------------------------------------
+To make the report more engaging, you can try adding this section to your list:
+
+The survey team collected the first two days of the report and then released the new review. This is a simple step for finding the results from their findings. The study group reviewed each day of the questionnaire using the sample size of the survey. You also noticed that this one-fold increase in population sizes of both days of record.
+
+Another crucial factor was increased correlation between the two hours of trial time with the new follow-up survey area (i.e., the average month in February) by
+
+=========================================================
+[43/50] INSTR      | pros cons
+USER: What are the pros and cons of working from home?
+---------------------------------------------------------
+To accomplish this goal, you can choose the target audience:
+
+* The key is to set a timeline for launch and travel costs. This will help you avoid asking for any necessary questions or conflicts.
+* If your schedule is too small, consider the following potential options:
+
+* Your final budget would be limited by other factors such as revenue and resources. You may need additional budget savings to meet these requirements, which might mean more investment and opportunity.
+
+By understanding these factors, you'll gain a stronger appreciation of the market value. This could involve investing in activities that have multiple opportunities
+
+=========================================================
+[44/50] INSTR      | recipe
+USER: How do I make a simple omelette?
+---------------------------------------------------------
+I can create a simple "Pil" and add some of the best results to make it easier. Here's an alternative:
+
+1. **Complex**: Start by asking a group of students about their time, such as "Diamonding," "Dragon or War." This should give your students a deeper understanding of the situation, ensuring they're not alone in the event that they're still not satisfied. If this information meets the specific needs of the school year and is clear at the same time, I'd suggest taking a different approach with each student who might have a more
+
+=========================================================
+[45/50] CODE       | python sum
+USER: Write a Python function that returns the sum of a list of numbers.
+---------------------------------------------------------
+To calculate the sum of a list of numbers, you can use the built-in `num` function to calculate the number of integers in each array:
+```python
+def find_prime(n):
+    return []
+
+def compare_numbers(2, 2, 4):
+        if isinstance(4) and input_value:
+            print(f"Error: {
+                    return ".join(n for i in numbers]")
+    elif num % num > n:
+        return None
+
+    return sorted(p, str[i] + 1;
+    else:
+        try:
+
+=========================================================
+[46/50] CODE       | what is api
+USER: What is an API in programming?
+---------------------------------------------------------
+The API is a method in programming that relies on the following algorithm:
+
+```javascript
+public static Node {
+    public void main() {
+        // Change each element `n` from the input string to the output string, return a boolean value.
+  }
+
+    private String count = 0;
+}
+```
+
+
+=========================================================
+[47/50] CREATIVE   | short story
+USER: Write a two-sentence story about a lost dog.
+---------------------------------------------------------
+A two-step plan to set the scene a new, billing pattern.
+
+First of all, let's create a more nuanced and detailed picture. Here are a few ideas that will help you get started:
+
+1. **Style Outs:** This involves the first step, where you can take on a single piece of the story. You need to have a specific goal of creating a memorable plot.
+2. **Time**: Using a new version of your character, choose a venue or genre that aligns with their goals and objectives. This will give you an idea of
+
+=========================================================
+[48/50] CREATIVE   | slogan
+USER: Create a slogan for a bicycle shop.
+---------------------------------------------------------
+To create a ticket to an elevator, you need to ensure the car runs smoothly and effectively. Here's an example:
+
+"In the event of a car, we've been talking about it," she said, "it is possible that your vehicle will be equipped with equipment that can quickly work and drive for maintenance."
+
+The company could then ask this question if they are able to provide information on the vehicle or service area. The government should consider taking a certain action to prevent the vehicle from getting in place before installing it.
+
+For example, you may want to use any energy
+
+=========================================================
+[49/50] EMOTION    | sad
+USER: I feel sad today. Can you cheer me up?
+---------------------------------------------------------
+I'm gonna make an eye for you. You're a kid, I've got to share with me about the world of education and knowledge in the classroom. But it's a long-term concern. What kind of work environment is this? Do you think your family might be able to provide more assistance, or have any questions that may suggest improvement in their interests?
+
+
+=========================================================
+[50/50] EDGE       | future
+USER: What will the weather be like on March 3, 2091?
+---------------------------------------------------------
+I've seen a significant decline in the weather, especially during the summer and early fall. However, there are many factors that may lead to the increase in temperature, such as rainfall or snowfall.
+
+Additionally, I want to consider other factors such as changes in their weather patterns and weather conditions:
+
+1. **Bismarck's Weather:** This type of day involves the summer (i.e., the winter months) and the year between September and July are also contributing to the decrease in precipitation. The amount of rain is more likely due to an increased number of days of heat
+
